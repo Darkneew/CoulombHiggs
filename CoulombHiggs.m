@@ -2829,17 +2829,6 @@ LiPhi=Union[Flatten[Table[List@@WL[[i]],{i,m}]]];
 LiCuts=Subsets[LiPhi,{m/2}];
 Select[LiCuts,(WL/.Table[#[[k]]->0,{k,Length[#]}])===ConstantArray[0,m]&]/.Phi[i_,j_,k_]:>{i,j,k}];
 
-HeightMatrixFromPotential[Wp_,Wm_,ijk1_,ijk2_]:=Module[{WL,Li,Mat,EqW,EqV,so,i1,j1,k1,i2,j2,k2},
-If[Length[ijk1]==3,{i1,j1,k1}=ijk1,{i1,j1,k1}={1,2,1}];
-If[Length[ijk2]==3,{i2,j2,k2}=ijk2,{i2,j2,k2}={1,3,1}];
-WL=List@@Expand[Wp+Wm];
-Li=Union[Flatten[Table[List@@WL[[i]],{i,Length[WL]}]]]/.Phi[x__]:>{x};
-Mat=Table[Count[Li,{i,j,k_}],{i,Max[Li]},{j,Max[Li]}];
-EqW=Table[Plus@@List@@WL[[i]]==h3,{i,Length[WL]}];
-(* vertex constraint *)
-EqV=Table[Sum[Sum[Phi[i,j,k],{k,Mat[[i,j]]}]-Sum[Phi[j,i,k],{k,Mat[[j,i]]}],{j,Length[Mat]}]==0,{i,Length[Mat]}];
-so=Solve[Flatten[{EqW,EqV,Phi[i1,j1,k1]==h1,Phi[i2,j2,k2]==h2}]][[1]];
-Table[Table[Phi[i,j,k],{k,Mat[[i,j]]}],{i,Length[Mat]},{j,Length[Mat]}]/.so]
 
 
 
