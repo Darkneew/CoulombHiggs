@@ -767,6 +767,9 @@ ConnectedQuiverQ::usage="ConnectedQuiverQ[Mat_,Nvec_] returns True is the restri
 HeightMatrixToDSZ::usage="HeightToDSZ[hMat_] computes the skew-symmetric Euler form from the matrix of heights";
 
 HeightMatrixFromPotential::usage="HeightMatrixFromPotential[Wp_,Wm_,{i1_,j1_,k1_},{i2_,j2_,k2_}] construct the matrix of heights such that the arrow Phi[i1,j1,k1] has height h1, the arrow Phi[i2,j2,k2] has height h2 and all monomials in the potential W=Wp-Wm have height h3";
+HeightMatrixFromPotential::potentialsign="The potentials given possess a minus sign.";
+HeightMatrixFromPotential::potentialduplicate="The potentials given possess a duplicate term.";
+HeightMatrixFromPotential::badarrows="The indices of the arrows passed in argument are ill-defined."
 
 QuiverMultiplierMat::usage="QuiverMultiplierMat[i_,j_] gives the multiplier to be applied to the (i,j) entry of the DSZ matrix, constructed from $QuiverMultiplier";
  
@@ -3257,17 +3260,20 @@ Mat2[[Li[[i,2]],Li[[i,1]]]]:=0;],{i,Length[Li]}];Mat2];
 
 HeightMatrixToDSZ[hMat_]:=Table[Length[hMat[[i,j]]]-Length[hMat[[j,i]]],{i,Length[hMat]},{j,Length[hMat]}];
 
-HeightMatrixFromPotential[Wp_,Wm_,ijk1_,ijk2_]:=Module[{WL,Li,Mat,EqW,EqV,so,i1,j1,k1,i2,j2,k2},
-If[Length[ijk1]==3,{i1,j1,k1}=ijk1,{i1,j1,k1}={1,2,1}];
-If[Length[ijk2]==3,{i2,j2,k2}=ijk2,{i2,j2,k2}={1,3,1}];
-WL=List@@Expand[Wp+Wm];
+HeightMatrixFromPotential[Wp_,Wm_,ijk1_,ijk2_]:=Module[{WL,Li,Mat,EqW,EqV,so,i1,j1,k1,i2,j2,k2,NumberVertices},
+If[Length[ijk1]==3,{i1,j1,k1}=ijk1,If[Length[ijk1]==2,{i1,j1}=ijk1;k1=1,Message[HeightMatrixFromPotential::badarrows]]];
+If[Length[ijk2]==3,{i2,j2,k2}=ijk2,If[Length[ijk2]==2,{i2,j2}=ijk2;k2=1,Message[HeightMatrixFromPotential::badarrows]]];
+WL=List@@Expand[Wp+Wm]; 
+If[Length[Cases[WL, _Times]] > 0, Message[HeightMatrixFromPotential::potentialsign]];
+If[Length[Cases[WL, _Integer]] > 0, Message[HeightMatrixFromPotential::potentialduplicate]];
 Li=Union[Flatten[Table[List@@WL[[i]],{i,Length[WL]}]]]/.Phi[x__]:>{x};
-Mat=Table[Count[Li,{i,j,k_}],{i,Max[Li]},{j,Max[Li]}];
+NumberVertices=Max[Li[[All,1;;2]]];
+Mat=Table[Count[Li,{i,j,k_}],{i,NumberVertices},{j,NumberVertices}];
 EqW=Table[Plus@@List@@WL[[i]]==h3,{i,Length[WL]}];
 (* vertex constraint *)
-EqV=Table[Sum[Sum[Phi[i,j,k],{k,Mat[[i,j]]}]-Sum[Phi[j,i,k],{k,Mat[[j,i]]}],{j,Length[Mat]}]==0,{i,Length[Mat]}];
+EqV=Table[Sum[Sum[Phi[i,j,k],{k,Mat[[i,j]]}]-Sum[Phi[j,i,k],{k,Mat[[j,i]]}],{j,NumberVertices}]==0,{i,NumberVertices}];
 so=Solve[Flatten[{EqW,EqV,Phi[i1,j1,k1]==h1,Phi[i2,j2,k2]==h2}]][[1]];
-Table[Table[Phi[i,j,k],{k,Mat[[i,j]]}],{i,Length[Mat]},{j,Length[Mat]}]/.so]
+Table[Table[Phi[i,j,k],{k,Mat[[i,j]]}],{i,NumberVertices},{j,NumberVertices}]/.so]
 
 QuiverMultiplierMat[i_,j_]:=If[Depth[$QuiverMultiplier]==1,$QuiverMultiplier,$QuiverMultiplier[[i,j]]];
 
