@@ -767,12 +767,22 @@ ConnectedQuiverQ::usage="ConnectedQuiverQ[Mat_,Nvec_] returns True is the restri
 HeightMatrixToDSZ::usage="HeightToDSZ[hMat_] computes the skew-symmetric Euler form from the matrix of heights";
 
 HeightMatrixFromPotential::usage="HeightMatrixFromPotential[Wp_,Wm_,{i1_,j1_,k1_},{i2_,j2_,k2_}] construct the matrix of heights such that the arrow Phi[i1,j1,k1] has height h1, the arrow Phi[i2,j2,k2] has height h2 and all monomials in the potential W=Wp-Wm have height h3";
-HeightMatrixFromPotential::potentialsign="The potentials given possess a minus sign.";
-HeightMatrixFromPotential::potentialduplicate="The potentials given possess a duplicate term.";
-HeightMatrixFromPotential::badarrows="The indices of the arrows passed in argument are ill-defined."
 
 QuiverMultiplierMat::usage="QuiverMultiplierMat[i_,j_] gives the multiplier to be applied to the (i,j) entry of the DSZ matrix, constructed from $QuiverMultiplier";
  
+
+
+
+(** Error messages **)
+
+Potential::sign="The potential given possesses a minus sign that shouldn't be present.";
+Potential::duplicate="The potential given possesses duplicate or cancelling terms.";
+Potential::numberOfTerms="The number of terms in the potentials do not match !";
+
+HeightMatrixFromPotential::arrowIndices="The indices of the arrows passed in argument are ill-defined.";
+
+
+
 
 
 Begin["`Private`"]
@@ -2827,7 +2837,7 @@ mx1=Min[First[Transpose[Fan]]];mx2=Max[First[Transpose[Fan]]];my1=Min[Last[Trans
 ListPerfectMatchings[Wp_,Wm_]:=Module[{WL,m,LiPhi,LiCuts},
 WL=Union[List@@Wp,List@@Wm];
 m=Length[WL];
-If[OddQ[m],Print["The number of terms in the potentials do not match !"]];
+If[OddQ[m],Message[Potential::numberOfTerms]];
 LiPhi=Union[Flatten[Table[List@@WL[[i]],{i,m}]]];
 LiCuts=Subsets[LiPhi,{m/2}];
 Select[LiCuts,(WL/.Table[#[[k]]->0,{k,Length[#]}])===ConstantArray[0,m]&]/.Phi[i_,j_,k_]:>{i,j,k}];
@@ -3261,11 +3271,11 @@ Mat2[[Li[[i,2]],Li[[i,1]]]]:=0;],{i,Length[Li]}];Mat2];
 HeightMatrixToDSZ[hMat_]:=Table[Length[hMat[[i,j]]]-Length[hMat[[j,i]]],{i,Length[hMat]},{j,Length[hMat]}];
 
 HeightMatrixFromPotential[Wp_,Wm_,ijk1_,ijk2_]:=Module[{WL,Li,Mat,EqW,EqV,so,i1,j1,k1,i2,j2,k2,NumberVertices},
-If[Length[ijk1]==3,{i1,j1,k1}=ijk1,If[Length[ijk1]==2,{i1,j1}=ijk1;k1=1,Message[HeightMatrixFromPotential::badarrows]]];
-If[Length[ijk2]==3,{i2,j2,k2}=ijk2,If[Length[ijk2]==2,{i2,j2}=ijk2;k2=1,Message[HeightMatrixFromPotential::badarrows]]];
+If[Length[ijk1]==3,{i1,j1,k1}=ijk1,If[Length[ijk1]==2,{i1,j1}=ijk1;k1=1,Message[HeightMatrixFromPotential::arrowIndices]]];
+If[Length[ijk2]==3,{i2,j2,k2}=ijk2,If[Length[ijk2]==2,{i2,j2}=ijk2;k2=1,Message[HeightMatrixFromPotential::arrowIndices]]];
 WL=List@@Expand[Wp+Wm]; 
-If[Length[Cases[WL, _Times]] > 0, Message[HeightMatrixFromPotential::potentialsign]];
-If[Length[Cases[WL, _Integer]] > 0, Message[HeightMatrixFromPotential::potentialduplicate]];
+If[Length[Cases[WL, _Times]] > 0, Message[Potential::sign]];
+If[Length[Cases[WL, _Integer]] > 0, Message[Potential::duplicate]];
 Li=Union[Flatten[Table[List@@WL[[i]],{i,Length[WL]}]]]/.Phi[x__]:>{x};
 NumberVertices=Max[Li[[All,1;;2]]];
 Mat=Table[Count[Li,{i,j,k_}],{i,NumberVertices},{j,NumberVertices}];
