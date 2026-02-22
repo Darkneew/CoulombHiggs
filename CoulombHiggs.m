@@ -2835,9 +2835,12 @@ PlotToricFan[Fan_]:=Module[{mx1,mx2,my1,my2},
 mx1=Min[First[Transpose[Fan]]];mx2=Max[First[Transpose[Fan]]];my1=Min[Last[Transpose[Fan]]];my2=Max[Last[Transpose[Fan]]];Graphics[{Thick,Line[Append[Fan,First[Fan]]]},PlotRange->{{mx1-1/3,mx2+1/3},{my1-1/3,my2+1/3}},GridLines->{Range[mx1,mx2],Range[my1,my2]},Frame->True,FrameTicks->None]];
 
 ListPerfectMatchings[Wp_,Wm_]:=Module[{WL,m,LiPhi,LiCuts},
-WL=Union[List@@Wp,List@@Wm];
+WL=Union[List@@Expand[Wp+Wm]];
+If[Length[Cases[WL,_Times]]>0,Message[Potential::sign]];
+If[Length[Cases[WL,_Integer]]>0,Message[Potential::duplicate]];
 m=Length[WL];
 If[OddQ[m],Message[Potential::numberOfTerms]];
+WL=Times@@#&/@WL;
 LiPhi=Union[Flatten[Table[List@@WL[[i]],{i,m}]]];
 LiCuts=Subsets[LiPhi,{m/2}];
 Select[LiCuts,(WL/.Table[#[[k]]->0,{k,Length[#]}])===ConstantArray[0,m]&]/.Phi[i_,j_,k_]:>{i,j,k}];
@@ -3274,8 +3277,8 @@ HeightMatrixFromPotential[Wp_,Wm_,ijk1_,ijk2_]:=Module[{WL,Li,Mat,EqW,EqV,so,i1,
 If[Length[ijk1]==3,{i1,j1,k1}=ijk1,If[Length[ijk1]==2,{i1,j1}=ijk1;k1=1,Message[HeightMatrixFromPotential::arrowIndices]]];
 If[Length[ijk2]==3,{i2,j2,k2}=ijk2,If[Length[ijk2]==2,{i2,j2}=ijk2;k2=1,Message[HeightMatrixFromPotential::arrowIndices]]];
 WL=List@@Expand[Wp+Wm]; 
-If[Length[Cases[WL, _Times]] > 0, Message[Potential::sign]];
-If[Length[Cases[WL, _Integer]] > 0, Message[Potential::duplicate]];
+If[Length[Cases[WL,_Times]]>0,Message[Potential::sign]];
+If[Length[Cases[WL,_Integer]]>0,Message[Potential::duplicate]];
 Li=Union[Flatten[Table[List@@WL[[i]],{i,Length[WL]}]]]/.Phi[x__]:>{x};
 NumberVertices=Max[Li[[All,1;;2]]];
 Mat=Table[Count[Li,{i,j,k_}],{i,NumberVertices},{j,NumberVertices}];
