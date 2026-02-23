@@ -775,7 +775,7 @@ QuiverMultiplierMat::usage="QuiverMultiplierMat[i_,j_] gives the multiplier to b
 
 (** Error messages **)
 
-Potential::sign="The potential given possesses a minus sign that shouldn't be present.";
+Potential::sign="The potential given possesses a minus sign that shouldn't be present or uses commutative multiplication.";
 Potential::duplicate="The potential given possesses duplicate or cancelling terms.";
 Potential::numberOfTerms="The number of terms in the potentials do not match !";
 
