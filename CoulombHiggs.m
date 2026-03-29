@@ -582,7 +582,7 @@ NCDTSeriesFromOmAtt::usage="NCDTSeriesFromOmAtt[Mat_, Framing_, Nmin_,Nmax_] con
 
 NCDTSeriesFromCrystal::usage="NCDTSeriesFromCrystal[hMat_, fMat_, theta_,phi_, Nn_] constructs the generating function of refined NCDT invariants for the quiver with height matrix hMat and framing data Framing using the refined Quiver Yangian algorithm with C^*_{theta,phi} action, for dimension vectors with height up to Nn.";
 
-UnrefinedSeriesFromCrystal::usage="UnrefinedSeriesFromCrystal[hMat_,fMat_,Nn_] constructs the generating function of unrefined NCDT invariants (y=1) or molten crystals (y=1) and framing data fMat using the Quiver Yangian algorithm, for dimension vectors with height up to NMax.";
+UnrefinedSeriesFromCrystal::usage="UnrefinedSeriesFromCrystal[hMat_,fMat_,Nn_] constructs the generating function of unrefined NCDT invariants (y=1) or molten crystals (y=-1) and framing data fMat using the Quiver Yangian algorithm, for dimension vectors with height up to NMax.";
 
 D6Framing::usage="D6Framing[hMat_,i_] constructs the framing data fMat for a D6-brane associated to node i";
 
