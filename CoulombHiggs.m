@@ -719,6 +719,8 @@ QuiverPlot::usage = "QuiverPlot[Mat_] displays the quiver with DSZ matrix Mat (o
 
 PlotQuiver::usage = "PlotQuiver[Mat_] displays the quiver with DSZ matrix or height matrix Mat ";
 
+DisplayArrowMatrix::usage = "DisplayArrowMatrix[Mat_] displays the number of arrows in the quiver with height matrix Mat in a matrix format"
+
 HirzebruchR::usage = "HirzebruchR[J_,v_] is the function R_v(J) entering in the Hirzebruch-Riemann-Roch formula ";
 
 GrassmannianPoincare::usage = "GrassmannianPoincare[k_,n_,y_] gives the Poincar\[EAcute] polynomial of the Grassmannian G(k,n)";
@@ -3219,7 +3221,9 @@ If[Depth[hMat[[1,1]]]>1,Gr=Flatten[Table[ConstantArray[i->j,Length[hMat[[i,j]]]]
 Gr=Flatten[Table[ConstantArray[i->j,Max[hMat[[i,j]],0]],{i,Length[hMat]},{j,Length[hMat]}]]];
 V=If[Length[$QuiverVertexLabels]==Length[hMat],$QuiverVertexLabels,Range[Length[hMat]]];
 Graph[Gr,DirectedEdges->True,VertexLabels->Table[i->V[[i]],{i,Length[hMat]}]]];       
-      
+
+DisplayArrowMatrix[hMat_]:=MatrixForm[Map[Length, hMat, {2}]];
+
 (* list loops and associated R-charges *)
 ListLoopRCharges[Mat_,RMat_]:=Module[{perm},
 perm=FindCycle[AdjacencyGraph[Table[If[Mat[[i,j]]>0,1,0],{i,Length[Mat]},{j,Length[Mat]}]],Infinity,All];
