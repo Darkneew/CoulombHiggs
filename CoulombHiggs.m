@@ -578,7 +578,7 @@ TrivialStackInvariant::usage="TrivialStackInvariant[Mat_,Cvec_,Nvec_] computes t
 
 NCDTSeriesFromOmS::usage="NCDTSeriesFromOmS[Mat_, Framing_, Nmin_,Nmax_] constructs the gener- ating function of NCDT invariants for the quiver with DSZ matrix Mat and framing vector Framing using the Coulomb branch formula, for dimension vectors from Nmin up to Nmax.";
 
-NCDTSeriesFromOmAtt::usage="NCDTSeriesFromOmAtt[Mat_, Framing_, Nmin_,Nmax_] constructs the gen- erating function of NCDT invariants for the quiver with DSZ matrix Mat and framing vector Framing using the Flow Tree formula, for dimension vectors from Nmin up to Nmax.";
+NCDTSeriesFromOmAtt::usage="NCDTSeriesFromOmAtt[Mat_, Framing_, Nmin_,Nmax_] constructs the generating function of NCDT invariants for the quiver with DSZ matrix Mat and framing vector Framing using the Flow Tree formula, for dimension vectors from Nmin up to Nmax.";
 
 NCDTSeriesFromCrystal::usage="NCDTSeriesFromCrystal[hMat_, fMat_, theta_, phi_, Nn_] or NCDTSeriesFromCrystal[hMat_, fMat_, actionWeight_, Nn_] constructs the generating function of refined NCDT invariants for the quiver with height matrix hMat and framing data Framing using the refined Quiver Yangian algorithm with C^* action determined by the angles theta and phi or directly by the weight actionWeight, for dimension vectors with height up to Nn. Set $theta=0$ or $h_3=0$ for action preserving the superpotential.";
 
@@ -594,23 +594,23 @@ FramedFI::usage="FramedFI[Nvec_]constructs a random FI parameter for a framed qu
 
 BondFactor::usage="BondFactor[hMat_,i_,j_,z_] evaluates the bond factor \[CurlyPhi]^{i->j(z), where hMat is a matrix whose (i, j)-entry is the list of heights of the arrows from node i to node j. The heights are in turn linear combinations of parameters h1, h2, h3";
 
-ChargeFunction::usage="[ChargeFunction[hMat_,fMat_,Crys_,i_,z_] constructs the charge function Phi^i_C(z) for the molten crystal C = Crys. The crystal is encoded in a list of {color, height} for each atom.";
+ChargeFunction::usage="[ChargeFunction[hMat_, fMat_, Crys_, i_, z_] constructs the charge function Phi^i_C(z) for the molten crystal C = Crys. The crystal is encoded in a list of {color, height} for each atom.";
 
-AddToCrystal::usage="AddToCrystal[hMat_,fMat_,i_,Crys_]constructs the list of molten crystals obtained by attaching one atom of color i to the molten crystal Crys.";
+AddToCrystal::usage="AddToCrystal[hMat_, fMat_, i_, Crys_] constructs the list of molten crystals obtained by attaching one atom of color i to the molten crystal Crys.";
 
-GrowCrystalList::usage="GrowCrystalList[hMat_,fMat_,CrysList_] constructs the molten crystals obtained from the list Crysli by attaching one additional atom of any color, or none at all";
+GrowCrystalList::usage="GrowCrystalList[hMat_, fMat_, CrysList_] constructs the molten crystals obtained from the list Crysli by attaching one additional atom of any color, or none at all";
 
-CrystalDim::usage="CrystalDim[r_,Crys_] computes the dimension vector for the crystal Crys, assuming that the colors can take values 1 up to r";
+CrystalDim::usage="CrystalDim[r_, Crys_] computes the dimension vector for the crystal Crys, assuming that the colors can take values 1 up to r";
 
 CrystalWeight::usage="CrystalWeight[hMat_, fMat_, actionWeight_, Crys_] computes the power of y associated to the molten crystal Crys using the C^* action given by the actionWeight. Give zero weight along h3 for action preserving the superpotential";
 
 DirectedSign::usage="DirectedSign[actionWeight_, lambda_] computes the sign for an atom with weight lambda, with respect to the C^* action given by the actionWeight";
 
-EulerNorm::usage="EulerNorm[hMat_,Nvec_] computes the Ringel-Tits norm of the dimension vector Nvec from the matrix of heights hMat";
+EulerNorm::usage="EulerNorm[hMat_, Nvec_] computes the Ringel-Tits norm of the dimension vector Nvec from the matrix of heights hMat";
 
-PlotTiling::usage="PlotTiling[hMat_,Nn_,v_,Range_,Shor_,Perf_] produces a 2D plot of the brane tiling defined by the matrix hMat, by iterating the arrows Nn times, removing those which belong to the perfect matching Perf. v is a list of 2D vectors {v1,v2} determining the vector v=x1 v1+x2 v2 associated to an arrow with weight x1 h1 +x2 h2 +x3 h3. The plot range is set to Range, and arrows are shortened by Shor. If the argument Perf is omitted, all arrows are included";
+PlotTiling::usage="PlotTiling[hMat_, Nn_, v_, Range_, Shor_, Perf_] produces a 2D plot of the brane tiling defined by the matrix hMat, by iterating the arrows Nn times, removing those which belong to the perfect matching Perf. v is a list of 2D vectors {v1,v2} determining the vector v=x1 v1+x2 v2 associated to an arrow with weight x1 h1 +x2 h2 +x3 h3. The plot range is set to Range, and arrows are shortened by Shor. If the argument Perf is omitted, all arrows are included";
 
-PlotTiling3D::usage="PlotTiling3D[hMat_,Nn_,v_,Range_,Perf_] produces a 3D plot of the brane tiling defined by the matrix hMat, by iterating the arrows Nn times, removing those which belong to the perfect matching Perf. v is a list of 3D vectors {v1,v2,v3} determining the vector v=x1 v1+x2 v2+x3 v3 associated to an arrow with weight x1 h1 +x2 h2 +x3 h3. The plot range is set to Range. If the argument Perf is omitted, all arrows are included";
+PlotTiling3D::usage="PlotTiling3D[hMat_, Nn_, v_, Range_, Perf_] produces a 3D plot of the brane tiling defined by the matrix hMat, by iterating the arrows Nn times, removing those which belong to the perfect matching Perf. v is a list of 3D vectors {v1,v2,v3} determining the vector v=x1 v1+x2 v2+x3 v3 associated to an arrow with weight x1 h1 +x2 h2 +x3 h3. The plot range is set to Range. If the argument Perf is omitted, all arrows are included";
 
 PlotToricFan::usage="PlotToricFan[Fan_] produces a 2D plot of the polygon with vertices listed in Fan";
 
