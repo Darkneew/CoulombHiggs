@@ -2710,7 +2710,7 @@ Cvec0-(Plus@@(Cvec0 Nvec0)/Plus@@Nvec0)ConstantArray[1,Length[Nvec0]]];
 
 D6Framing[hMat_,i_]:={Table[If[c==i,{0},{}],{c,Length[hMat]}],Table[{},{c,Length[hMat]}]};
 
-D4Framing[hMat_,i_,j_,k_]:={Table[If[c==i,{0},{}],{c,Length[hMat]}],Table[If[c==j,{hMat[[i,j,k]]},{}],{c,Length[hMat]}]};
+D4Framing[hMat_,i_,j_,k_]:={Table[If[c==i,{(h3-hMat[[i,j,k]])/2},{}],{c,Length[hMat]}],Table[If[c==j,{(h3-hMat[[i,j,k]])/2},{}],{c,Length[hMat]}]};
 
 EulerNorm[hMat_,Nvec_]:=Sum[Nvec[[i]]^2,{i,Length[hMat]}]-Sum[Length[hMat[[i,j]]]Nvec[[i]]Nvec[[j]],{i,Length[hMat]},{j,Length[hMat]}];
 
