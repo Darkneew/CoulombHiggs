@@ -580,7 +580,7 @@ NCDTSeriesFromOmS::usage="NCDTSeriesFromOmS[Mat_, Framing_, Nmin_,Nmax_] constru
 
 NCDTSeriesFromOmAtt::usage="NCDTSeriesFromOmAtt[Mat_, Framing_, Nmin_,Nmax_] constructs the gen- erating function of NCDT invariants for the quiver with DSZ matrix Mat and framing vector Framing using the Flow Tree formula, for dimension vectors from Nmin up to Nmax.";
 
-NCDTSeriesFromCrystal::usage="NCDTSeriesFromCrystal[hMat_, fMat_, theta_,phi_, Nn_] constructs the generating function of refined NCDT invariants for the quiver with height matrix hMat and framing data Framing using the refined Quiver Yangian algorithm with C^*_{theta,phi} action, for dimension vectors with height up to Nn.";
+NCDTSeriesFromCrystal::usage="NCDTSeriesFromCrystal[hMat_, fMat_, theta_, phi_, Nn_] or NCDTSeriesFromCrystal[hMat_, fMat_, actionWeight_, Nn_] constructs the generating function of refined NCDT invariants for the quiver with height matrix hMat and framing data Framing using the refined Quiver Yangian algorithm with C^* action determined by the angles theta and phi or directly by the weight actionWeight, for dimension vectors with height up to Nn. Set $theta=0$ or $h_3=0$ for action preserving the superpotential.";
 
 UnrefinedSeriesFromCrystal::usage="UnrefinedSeriesFromCrystal[hMat_,fMat_,Nn_] constructs the generating function of unrefined NCDT invariants (y=1) or molten crystals (y=-1) and framing data fMat using the Quiver Yangian algorithm, for dimension vectors with height up to NMax.";
 
@@ -602,9 +602,9 @@ GrowCrystalList::usage="GrowCrystalList[hMat_,fMat_,CrysList_] constructs the mo
 
 CrystalDim::usage="CrystalDim[r_,Crys_] computes the dimension vector for the crystal Crys, assuming that the colors can take values 1 up to r";
 
-CrystalWeight::usage="CrystalWeight[hMat_,fMat_,theta_,phi_,Crys_] computes the power of y associated to the molten crystal Crys using the C^x_{theta,phi} action. Set $theta=0$ for action preserving the superpotential";
+CrystalWeight::usage="CrystalWeight[hMat_, fMat_, actionWeight_, Crys_] computes the power of y associated to the molten crystal Crys using the C^* action given by the actionWeight. Give zero weight along h3 for action preserving the superpotential";
 
-DirectedSign::usage="DirectedSign[theta_,phi_,lambda_] computes the sign for an atom with weight lambda, with respect to C^x_{x,y} action";
+DirectedSign::usage="DirectedSign[actionWeight_, lambda_] computes the sign for an atom with weight lambda, with respect to the C^* action given by the actionWeight";
 
 EulerNorm::usage="EulerNorm[hMat_,Nvec_] computes the Ringel-Tits norm of the dimension vector Nvec from the matrix of heights hMat";
 
@@ -2715,10 +2715,12 @@ D4Framing[hMat_,i_,j_,k_]:={Table[If[c==i,{(h3-hMat[[i,j,k]])/2},{}],{c,Length[h
 
 EulerNorm[hMat_,Nvec_]:=Sum[Nvec[[i]]^2,{i,Length[hMat]}]-Sum[Length[hMat[[i,j]]]Nvec[[i]]Nvec[[j]],{i,Length[hMat]},{j,Length[hMat]}];
 
-NCDTSeriesFromCrystal[hMat_,fMat_,theta_,phi_,Nn_]:=Module[{A,A1,Z,CrysLi,Crys,Nvec},
+NCDTSeriesFromCrystal[hMat_,fMat_,theta_,phi_,Nn_]:=NCDTSeriesFromCrystal[hMat,fMat,Cos[theta]*(Cos[phi]*h1+Sin[phi]*h2)+Sin[theta]*h3,Nn];
+
+NCDTSeriesFromCrystal[hMat_,fMat_,actionWeight_,Nn_]:=Module[{A,A1,Z,CrysLi,Crys,Nvec},
 Z=1;CrysLi={{}};
 Do[A=GrowCrystalList[hMat,fMat,CrysLi];
-Z+=Sum[Nvec=CrystalDim[Length[hMat],Crys];(-y)^CrystalWeight[hMat,fMat,theta,phi,Crys]
+Z+=Sum[Nvec=CrystalDim[Length[hMat],Crys];(-y)^CrystalWeight[hMat,fMat,actionWeight,Crys]
 Product[Subscript[x,k]^Nvec[[k]],{k,Length[hMat]}],{Crys,A}];
 CrysLi=A,{l,Nn}];
 Plus@@MonomialList[Expand[Z],Table[Subscript[x,k],{k,Length[hMat]}]]];
@@ -2793,11 +2795,9 @@ DeleteDuplicates[CrysList2]]; *)
 
 CrystalDim[r_,Crys_]:=Module[{Li},Li=Table[Crys[[j,1]],{j,Length[Crys]}];Table[Count[Li,i],{i,r}]];
 
-CrystalWeight[hMat_,fMat_,theta_,phi_,Crys_]:= -Sum[Sum[If[lambda[[1]]==mu[[1]],DirectedSign[theta,phi,lambda[[2]]-mu[[2]]],0],{mu,Crys}],{lambda,Crys}]+Sum[Sum[Sum[DirectedSign[theta,phi,lambda[[2]]+a-mu[[2]]],{a,hMat[[lambda[[1]],mu[[1]]]]}],{mu,Crys}],{lambda,Crys}]+Sum[Sum[DirectedSign[theta,phi,f-lambda[[2]]],{f,fMat[[1,lambda[[1]]]]}],{lambda,Crys}]+Sum[Sum[DirectedSign[theta,phi,lambda[[2]]-r],{r,fMat[[2,lambda[[1]]]]}],{lambda,Crys}];
+CrystalWeight[hMat_,fMat_,actionWeight_,Crys_]:= -Sum[Sum[If[lambda[[1]]==mu[[1]],DirectedSign[actionWeight,lambda[[2]]-mu[[2]]],0],{mu,Crys}],{lambda,Crys}]+Sum[Sum[Sum[DirectedSign[actionWeight,lambda[[2]]+a-mu[[2]]],{a,hMat[[lambda[[1]],mu[[1]]]]}],{mu,Crys}],{lambda,Crys}]+Sum[Sum[DirectedSign[actionWeight,f-lambda[[2]]],{f,fMat[[1,lambda[[1]]]]}],{lambda,Crys}]+Sum[Sum[DirectedSign[actionWeight,lambda[[2]]-r],{r,fMat[[2,lambda[[1]]]]}],{lambda,Crys}];
 
-DirectedSign[theta_,phi_,lambda_]:=If[Cos[theta]*(Cos[phi]*D[lambda,h1]+Sin[phi]*D[lambda,h2])+Sin[theta]*D[lambda,h3]>0,1,0]-If[Cos[theta]*(Cos[phi]*D[lambda,h1]+Sin[phi]*D[lambda,h2])+Sin[theta]*D[lambda-h3,h3]<0,1,0];
-
-
+DirectedSign[actionWeight_,lambda_]:=Sign[Sum[D[actionWeight, i] D[lambda, i], {i, {h1,h2,h3}}]];
 
 PlotTiling[hMat_,Nn_,v_,Rang_,Shor_,Perf_:{}]:=Module[{ArrowList,ArrowList2,Labels,v1,v2},
 (* produces a list of (color of endpoint, starting point, endpoint, iterating N times excluding arrows in Perf *)
