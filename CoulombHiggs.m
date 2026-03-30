@@ -709,7 +709,6 @@ RandomFI::usage = "RandomFI[gam_] generates a random set of FI parameters betwee
 
 
 UnitStepWarn::usage = "UnitStepWarn[x_] gives 1 for x>0, 0 for x<0, and produces a warning for x=0";
-UnitStepWarn::zero = "UnitStep with vanishing argument, evaluates to 1/2";
 
 AttractorFI::usage = "AttractorFI[Mat_,Nvec_] gives the attractor stability condition";
 
@@ -782,6 +781,8 @@ Potential::duplicate="The potential given possesses duplicate or cancelling term
 Potential::numberOfTerms="The number of terms in the potentials do not match !";
 
 HeightMatrixFromPotential::arrowIndices="The indices of the arrows passed in argument are ill-defined.";
+
+UnitStepWarn::zero = "UnitStep with vanishing argument, evaluates to 1/2";
 
 
 
