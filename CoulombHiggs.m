@@ -2820,7 +2820,7 @@ Text[Style[Framed[Labels[[ArrowList[[k,1]]]],RoundingRadius->10],Black,Medium],v
 
 PlotTiling3D[hMat_,Nn_,v_,Rang_,Perf_:{}]:=Module[{ArrowList,ArrowList2,Labels,v1,v2,v3},
 (* produces a list of (color of endpoint, starting point, endpoint, iterating N times excluding arrows in Perf *)
-If[Length[v]==3,{v1,v2,v3}=v,{v1,v2,v3}={{1,0,0},{1,0,0},{1,0,0}}];
+If[Length[v]==3,{v1,v2,v3}=v,{v1,v2,v3}={{0,1,0},{0,0,1},{1,0,0}}];
 ArrowList={{1,0,0}};
 Labels=If[Length[$QuiverVertexLabels]==Length[hMat],$QuiverVertexLabels,Range[Length[hMat]]];
 Do[ArrowList2=ArrowList;
