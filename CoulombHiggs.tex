@@ -393,7 +393,6 @@ These heights, as well as the bipartite potential $W=W_+-W_-$,  are pre-computed
 }
 For computing unrefined NCDT invariants for the conifold up to order $x^5$, you may use
 
-% There are multiple issues in the code below. 
 \mathematica{1.0}{
 \{Tiling, Fan, hMat, Wp, Wm, v1, v2\} = BraneTilingsData[[2]];
 NCDTSeriesFromCrystal[hMat, \{1, 0\}, 5] }
@@ -1269,11 +1268,10 @@ $\var{hMat}$ and framing data $\var{fMat}$ using
 the Quiver Yangian algorithm, for dimension
 vectors with height up to $\var{Nn}$. Here $\var{fMat}$ is a list of two elements: the first is
 a matrix of weights $h(q_i^\alpha)$  of arrows $q_i^\alpha:\infty\to i$, and the second is  
-a matrix of weights $h(p_i)$  of arrows $p_i^\beta:i\to \infty$. The result is a generating series 
+a matrix of weights $h(p_i)$  of arrows $p_i^\beta:\infty\to i$. The result is a generating series 
 of Laurent polynomials in $y$,
 which reduces to the unrefined DT invariants at $y=1$, and to the number of molten crystals at $y=-1$. Here $y$ is {\it not} a refinement parameter !}
 
-% Below is a very weird function to define, since it will obviously highly depend on the choice of slope. Only certain slopes should be allowed.
 \defn{NCDTSeriesFromCrystal}{\vardef{hMat}, \vardef{fMat},\vardef{theta}, \vardef{phi}, \vardef{Nmax}}{constructs the generating function of refined NCDT invariants for the quiver with height matrix 
 $\var{hMat}$ and framing data $\var{fMat}$ using 
 the refined Quiver Yangian algorithm with $\mathbb{C}^\times_{\theta,\phi}$ action, for dimension
@@ -1283,7 +1281,7 @@ a matrix of weights $h(p_i)$  of arrows $p_i^\beta:\infty\to i$. }
 
 \defn{D6Framing}{\vardef{hMat},\vardef{i}}{constructs the framing data \var{fMat} for a D6-brane associated to node $i$, with only one arrow $q_i:\infty\to i$} 
 
-\defn{D4Framing}{\vardef{hMat},\vardef{i},\vardef{j},\vardef{k}}{constructs the framing data \var{fMat} for a non-compact D4-brane associated to the $k$-th arrow $i\to j$,  with one arrow $q_i:\infty\to i$,
+\defn{D4Framing}{\vardef{hMat},\vardef{i}}{constructs the framing data \var{fMat} for a non-compact D4-brane associated to the $k$-th arrow $i\to j$,  with one arrow $q_i:\infty\to i$,
 one arrow $p_j:j \to \infty$ and superpotential $W=W_0+ p_j \Phi_{ij}^k q_i$} 
 
 \defn{FramedDSZ}{\vardef{Mat},\vardef{Framing}}{starting from a quiver with DSZ matrix $\var{Mat}$, constructs the DSZ matrix of the framed quiver with $f_i$ arrows from the framing node (labelled 0) to the node $i$.} 
@@ -1311,13 +1309,13 @@ to construct the larger list of molten crystals with up to one additional atom o
 \defn{CrystalDim}{\vardef{r},\vardef{Crys}}{computes the dimension vector of the
 crystal $\var{Crys}$, assuming that the colors can take values $1$ up to $r$.}
 
-\defn{CrystalWeight}{\vardef{hMat}, \vardef{fMat}, \vardef{theta},  \vardef{phi},  \vardef{Crys}}
+\defn{CrystaWeight}{\vardef{hMat}, \vardef{fMat}, \vardef{theta},  \vardef{phi},  \vardef{Crys}}
 {computes the power of $y$ associated to the molten crystal $\var{Crys}$, using the $\mathbb{C}^\times$ action specified by the angles $(\theta,\phi)$. The default case $\theta=0$ corresponds to a  
 $\mathbb{C}^\times$ action that preserves the superpotential.}
 
 \defn{DirectedSign}{\vardef{theta},  \vardef{phi},  \vardef{lambda}}
-{computes the sign of $\cos\theta ( \lambda_1 \cos\phi + \lambda_2 \sin\phi ) + 
-\lambda_3 \sin\theta $, where $\lambda=\lambda_1 h_1 + \lambda_2 h_2 + \lambda_3 h_3$,
+{computes the sign of $\cos\theta ( \lambda_1 \cos\phi +  \sin\phi \lambda_2) + 
+\sin\theta \lambda_3$, where $\lambda=\lambda_1 h_1 + \lambda_2 h_2 + \lambda_3 h_3$,
 used by \fun{CrystalWeight}}
 
 
