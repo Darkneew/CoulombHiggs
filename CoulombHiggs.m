@@ -618,6 +618,8 @@ PlotToricFan::usage="PlotToricFan[Fan_] produces a 2D plot of the polygon with v
 
 ListPerfectMatchings::usage="ListPerfectMatchings[Wp_,Wm_] produces the list of cuts for the potential Wp-Wm; each term in the potential must be a sum of monomials in Phi[i,j,k] with unit coefficient, and each perfect matching is represented by a list of triplets {i,j,k}";
 
+PerfectMatchingWeight::usage="PerfectMatchingWeight[Perf_,hMat_] gives the weight of the perfect matching Perf, given the height matrix hMat";
+
 PlethysticExp::usage="PlethysticExp[f_,Nn_] computes the plethystic exponential of f, assuming that it is a function of x[i] and y only";
 
 PlethysticLog::usage="PlethysticLog[f_,Nn_] computes the plethystic logarythm of f , assuming that it is a function of x[i] and y only";
@@ -786,7 +788,7 @@ HeightMatrixFromPotential::arrowIndices="The indices of the arrows passed in arg
 
 UnitStepWarn::zero = "UnitStep with vanishing argument, evaluates to 1/2";
 
-
+PerfectMatching::incoherentWeight = "There is an incoherence in the perfect matching or the height matrix, resulting in the inability to define a proper weight."
 
 
 
@@ -2852,8 +2854,14 @@ LiPhi=Union[Flatten[Table[List@@WL[[i]],{i,m}]]];
 LiCuts=Subsets[LiPhi,{m/2}];
 Select[LiCuts,(WL/.Table[#[[k]]->0,{k,Length[#]}])===ConstantArray[0,m]&]/.Phi[i_,j_,k_]:>{i,j,k}];
 
-
-
+PerfectMatchingWeight[Perf_,hMat_]:=Module[{exprs},exprs={};
+With[{perfWeight=Join[Array[Symbol["q"<>ToString[#]]&,Length[hMat]],{weight1,weight2,1}]},
+For[i=1,i<=Length[hMat],i++,For[j=1,j<=Length[hMat[[i]]],j++,For[k=1,k<=Length[hMat[[i,j]]],k++,
+If[ContainsAny[Perf,{{i,j,k}}],
+AppendTo[exprs,Total[perfWeight Join[Array[If[#==j,1,0]&,Length[hMat]]+Array[If[#==i,-1,0]&,Length[hMat]],D[hMat[[i,j,k]],#]&/@{h1,h2,h3}]]==1],
+AppendTo[exprs,Total[perfWeight Join[Array[If[#==j,1,0]&,Length[hMat]]+Array[If[#==i,-1,0]&,Length[hMat]],D[hMat[[i,j,k]],#]&/@{h1,h2,h3}]]==0]]]]];
+With[{sol=Solve[And@@exprs,Join[Array[Symbol["q"<>ToString[#]]&,Length[hMat]-1],{weight1,weight2}]]},
+If[Length[sol]!=1,Message[PerfectMatching::incoherentWeight],(weight1 h1+weight2 h2+h3)/.sol[[1]]]]]];
 
 
 (* ::Subsection:: *)
