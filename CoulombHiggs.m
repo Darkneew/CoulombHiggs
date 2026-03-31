@@ -622,6 +622,8 @@ ListPerfectMatchings::usage="ListPerfectMatchings[Wp_,Wm_] produces the list of 
 
 PerfectMatchingWeight::usage="PerfectMatchingWeight[Perf_,hMat_] gives the weight of the perfect matching Perf, given the height matrix hMat";
 
+ShortestCycleWeight::usage="ShortestCycleWeight[hMat_,node_,Cut_,maxIters_] computes the weight of the shortest cycle starting from node, for the quiver whose height matrix is hMat, with the arrows from Cut removed. The algorithm stops after maxIters iterations. If Cut is omitted, no arrow is removed. If maxIters is omitted, the algorithm will stop after 1000 iterations. If multiple cycles are equally long, the algorithm will choose one arbitrarily"
+
 DualFan::usage="DualFan[hMat_,Wp_,Wm_] produces the fan dual to the quiver with potential, described by its height matrix hMat and its potential Wp-Wm";
 
 PlethysticExp::usage="PlethysticExp[f_,Nn_] computes the plethystic exponential of f, assuming that it is a function of x[i] and y only";
@@ -793,6 +795,8 @@ HeightMatrixFromPotential::arrowIndices="The indices of the arrows passed in arg
 UnitStepWarn::zero = "UnitStep with vanishing argument, evaluates to 1/2";
 
 PerfectMatching::incoherentWeight = "There is an incoherence in the perfect matching or the height matrix, resulting in the inability to define a proper weight."
+
+ShortestCycleWeight::noCycle = "There is no cycle in the possibly cut quiver and starting from the given node."
 
 
 
@@ -2874,7 +2878,14 @@ LCM@@Denominator/@Flatten[rpoints]*rpoints];
 
 GetExternalPoints[Fan_]:=With[{mesh=ConvexHullMesh[Fan]},MeshCoordinates[mesh][[MeshCells[mesh,2][[1,1]]]]];
 
- 
+ShortestCycleWeight[hMat_,node_,Cut_:{},maxIters_:1000]:=Module[{queue,weight,w,n,count},
+weight=0;count=0;queue=CreateDataStructure["Queue"];queue["Push",{0,node}];
+While[(!queue["EmptyQ"])&&weight===0,{w,n}=queue["Pop"];
+For[j=1,j<=Length[hMat[[n]]],j++,For[k=1,k<=Length[hMat[[n,j]]],k++,
+If[ContainsNone[Cut,{{n,j,k}}],If[j==node,weight=w+hMat[[n,j,k]],queue["Push",{w+hMat[[n,j,k]],j}]]]]];
+count++;
+If[count>=maxIters,queue["DropAll"]]];
+If[weight===0,Message[ShortestCycleWeight::noCycle],weight]];
 
 
 (* ::Subsection:: *)
