@@ -616,9 +616,13 @@ PlotTiling3D::usage="PlotTiling3D[hMat_, Nn_, v_, Range_, Perf_] produces a 3D p
 
 PlotToricFan::usage="PlotToricFan[Fan_] produces a 2D plot of the polygon with vertices listed in Fan";
 
+GetExternalPoints::usage="GetExternalPoints[Fan_] lists in order the external points of Fan, corresponding to non-compact divisor. The result can be plotted using PlotToricFan"
+
 ListPerfectMatchings::usage="ListPerfectMatchings[Wp_,Wm_] produces the list of cuts for the potential Wp-Wm; each term in the potential must be a sum of monomials in Phi[i,j,k] with unit coefficient, and each perfect matching is represented by a list of triplets {i,j,k}";
 
 PerfectMatchingWeight::usage="PerfectMatchingWeight[Perf_,hMat_] gives the weight of the perfect matching Perf, given the height matrix hMat";
+
+DualFan::usage="DualFan[hMat_,Wp_,Wm_] produces the fan dual to the quiver with potential, described by its height matrix hMat and its potential Wp-Wm";
 
 PlethysticExp::usage="PlethysticExp[f_,Nn_] computes the plethystic exponential of f, assuming that it is a function of x[i] and y only";
 
@@ -2862,6 +2866,15 @@ AppendTo[exprs,Total[perfWeight Join[Array[If[#==j,1,0]&,Length[hMat]]+Array[If[
 AppendTo[exprs,Total[perfWeight Join[Array[If[#==j,1,0]&,Length[hMat]]+Array[If[#==i,-1,0]&,Length[hMat]],D[hMat[[i,j,k]],#]&/@{h1,h2,h3}]]==0]]]]];
 With[{sol=Solve[And@@exprs,Join[Array[Symbol["q"<>ToString[#]]&,Length[hMat]-1],{weight1,weight2}]]},
 If[Length[sol]!=1,Message[PerfectMatching::incoherentWeight],(weight1 h1+weight2 h2+h3)/.sol[[1]]]]]];
+
+DualFan[hMat_,Wp_,Wm_]:=Module[{rpoints},
+rpoints=DeleteDuplicates[With[{perfs=ListPerfectMatchings[Wp,Wm]},{D[#,h1],D[#,h2]}&/@(PerfectMatchingWeight[#,hMat]&/@perfs)]];
+rpoints=With[{shift={MinimalBy[rpoints[[;;,1]],Abs][[1]],MinimalBy[rpoints[[;;,2]],Abs][[1]]}},(#-shift)&/@rpoints];
+LCM@@Denominator/@Flatten[rpoints]*rpoints];
+
+GetExternalPoints[Fan_]:=With[{mesh=ConvexHullMesh[Fan]},MeshCoordinates[mesh][[MeshCells[mesh,2][[1,1]]]]];
+
+ 
 
 
 (* ::Subsection:: *)
