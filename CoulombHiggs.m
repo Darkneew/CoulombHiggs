@@ -622,7 +622,9 @@ ListPerfectMatchings::usage="ListPerfectMatchings[Wp_,Wm_] produces the list of 
 
 PerfectMatchingWeight::usage="PerfectMatchingWeight[Perf_,hMat_] gives the weight of the perfect matching Perf, given the height matrix hMat";
 
-ShortestCycleWeight::usage="ShortestCycleWeight[hMat_,node_,Cut_,maxIters_] computes the weight of the shortest cycle starting from node, for the quiver whose height matrix is hMat, with the arrows from Cut removed. The algorithm stops after maxIters iterations. If Cut is omitted, no arrow is removed. If maxIters is omitted, the algorithm will stop after 1000 iterations. If multiple cycles are equally long, the algorithm will choose one arbitrarily"
+ShortestCycleWeight::usage="ShortestCycleWeight[hMat_,node_,Cut_,maxIters_] computes the weight of the shortest cycle starting from node, for the quiver whose height matrix is hMat, with the arrows from Cut removed. The algorithm stops after maxIters iterations. If Cut is omitted, no arrow is removed. If maxIters is omitted, the algorithm will stop after 1000 iterations. If multiple cycles are equally long, the algorithm will choose one arbitrarily";
+
+SideWeight::usage="SideWeight[hMat_,Wp_,Wm_,z_] computes the weight lz associated to the side lying between the z and z+1 corners of the dual toric fan, for a quiver of height matrix hMat and potential Wp-Wm. The order of the dual toric fan corners is given by applying ExternalPoints to DualFan";
 
 DualFan::usage="DualFan[hMat_,Wp_,Wm_] or DualFan[hMat_,Perfs_] produces the fan dual to the quiver with potential, described by its height matrix hMat and its potential Wp-Wm or its complete list of perfect matchings Perfs";
 
@@ -794,9 +796,11 @@ HeightMatrixFromPotential::arrowIndices="The indices of the arrows passed in arg
 
 UnitStepWarn::zero = "UnitStep with vanishing argument, evaluates to 1/2";
 
-PerfectMatching::incoherentWeight = "There is an incoherence in the perfect matching or the height matrix, resulting in the inability to define a proper weight."
+PerfectMatching::incoherentWeight="There is an incoherence in the perfect matching or the height matrix, resulting in the inability to define a proper weight.";
 
-ShortestCycleWeight::noCycle = "There is no cycle in the possibly cut quiver and starting from the given node."
+ShortestCycleWeight::noCycle="There is no cycle in the possibly cut quiver and starting from the given node.";
+
+ToricFan::CornerIndexLimit="The toric fan doesn't have enough sides/corners. The index given is too high.";
 
 
 
@@ -2888,6 +2892,15 @@ If[ContainsNone[Cut,{{n,j,k}}],If[j==node,weight=w+hMat[[n,j,k]],queue["Push",{w
 count++;
 If[count>=maxIters,queue["DropAll"]]];
 If[weight===0,Message[ShortestCycleWeight::noCycle],weight]];
+
+SideWeight[hMat_,Wp_,Wm_,z_]:=With[{perfs=ListPerfectMatchings[Wp,Wm]},
+With[{dualpoints=DualFan[hMat,perfs]},
+With[{extpoints=ExternalPoints[dualpoints]},
+If[z>Length[extpoints],Message[ToricFan::CornerIndexLimit]];
+With[{cut=DeleteDuplicates[Join[perfs[[FirstPosition[dualpoints,extpoints[[z]]][[1]]]],
+If[z==Length[extpoints],perfs[[FirstPosition[dualpoints,extpoints[[1]]][[1]]]],
+perfs[[FirstPosition[dualpoints,extpoints[[z+1]]][[1]]]]]]]},
+ShortestCycleWeight[hMat,1,cut]]]]];
 
 
 (* ::Subsection:: *)
