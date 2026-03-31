@@ -606,6 +606,8 @@ CrystalWeight::usage="CrystalWeight[hMat_, fMat_, actionWeight_, Crys_] computes
 
 DirectedSign::usage="DirectedSign[actionWeight_, lambda_] computes the sign for an atom with weight lambda, with respect to the C^* action given by the actionWeight";
 
+WeightScalarProduct::usage="WeightScalarProduct[mu_, lambda_] computes the scalar product between the two weights mu and lambda";
+
 EulerNorm::usage="EulerNorm[hMat_, Nvec_] computes the Ringel-Tits norm of the dimension vector Nvec from the matrix of heights hMat";
 
 PlotTiling::usage="PlotTiling[hMat_, Nn_, v_, Range_, Shor_, Perf_] produces a 2D plot of the brane tiling defined by the matrix hMat, by iterating the arrows Nn times, removing those which belong to the perfect matching Perf. v is a list of 2D vectors {v1,v2} determining the vector v=x1 v1+x2 v2 associated to an arrow with weight x1 h1 +x2 h2 +x3 h3. The plot range is set to Range, and arrows are shortened by Shor. If the argument Perf is omitted, all arrows are included";
@@ -2797,7 +2799,9 @@ CrystalDim[r_,Crys_]:=Module[{Li},Li=Table[Crys[[j,1]],{j,Length[Crys]}];Table[C
 
 CrystalWeight[hMat_,fMat_,actionWeight_,Crys_]:= -Sum[Sum[If[lambda[[1]]==mu[[1]],DirectedSign[actionWeight,lambda[[2]]-mu[[2]]],0],{mu,Crys}],{lambda,Crys}]+Sum[Sum[Sum[DirectedSign[actionWeight,lambda[[2]]+a-mu[[2]]],{a,hMat[[lambda[[1]],mu[[1]]]]}],{mu,Crys}],{lambda,Crys}]+Sum[Sum[DirectedSign[actionWeight,f-lambda[[2]]],{f,fMat[[1,lambda[[1]]]]}],{lambda,Crys}]+Sum[Sum[DirectedSign[actionWeight,lambda[[2]]-r],{r,fMat[[2,lambda[[1]]]]}],{lambda,Crys}];
 
-DirectedSign[actionWeight_,lambda_]:=Sign[Sum[D[actionWeight, i] D[lambda, i], {i, {h1,h2,h3}}]];
+DirectedSign[actionWeight_,lambda_]:=Sign[WeightScalarProduct[actionWeight,lambda]];
+
+WeightScalarProduct[mu_,lambda_]:=Sum[D[mu, i] D[lambda, i], {i, {h1,h2,h3}}]
 
 PlotTiling[hMat_,Nn_,v_,Rang_,Shor_,Perf_:{}]:=Module[{ArrowList,ArrowList2,Labels,v1,v2},
 (* produces a list of (color of endpoint, starting point, endpoint, iterating N times excluding arrows in Perf *)
