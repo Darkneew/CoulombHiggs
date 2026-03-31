@@ -616,7 +616,7 @@ PlotTiling3D::usage="PlotTiling3D[hMat_, Nn_, v_, Range_, Perf_] produces a 3D p
 
 PlotToricFan::usage="PlotToricFan[Fan_] produces a 2D plot of the polygon with vertices listed in Fan";
 
-GetExternalPoints::usage="GetExternalPoints[Fan_] lists in order the external points of Fan, corresponding to non-compact divisor. The result can be plotted using PlotToricFan"
+ExternalPoints::usage="ExternalPoints[Fan_] lists in order the external points of Fan, corresponding to non-compact divisor. The result can be plotted using PlotToricFan"
 
 ListPerfectMatchings::usage="ListPerfectMatchings[Wp_,Wm_] produces the list of cuts for the potential Wp-Wm; each term in the potential must be a sum of monomials in Phi[i,j,k] with unit coefficient, and each perfect matching is represented by a list of triplets {i,j,k}";
 
@@ -624,7 +624,7 @@ PerfectMatchingWeight::usage="PerfectMatchingWeight[Perf_,hMat_] gives the weigh
 
 ShortestCycleWeight::usage="ShortestCycleWeight[hMat_,node_,Cut_,maxIters_] computes the weight of the shortest cycle starting from node, for the quiver whose height matrix is hMat, with the arrows from Cut removed. The algorithm stops after maxIters iterations. If Cut is omitted, no arrow is removed. If maxIters is omitted, the algorithm will stop after 1000 iterations. If multiple cycles are equally long, the algorithm will choose one arbitrarily"
 
-DualFan::usage="DualFan[hMat_,Wp_,Wm_] produces the fan dual to the quiver with potential, described by its height matrix hMat and its potential Wp-Wm";
+DualFan::usage="DualFan[hMat_,Wp_,Wm_] or DualFan[hMat_,Perfs_] produces the fan dual to the quiver with potential, described by its height matrix hMat and its potential Wp-Wm or its complete list of perfect matchings Perfs";
 
 PlethysticExp::usage="PlethysticExp[f_,Nn_] computes the plethystic exponential of f, assuming that it is a function of x[i] and y only";
 
@@ -2871,12 +2871,14 @@ AppendTo[exprs,Total[perfWeight Join[Array[If[#==j,1,0]&,Length[hMat]]+Array[If[
 With[{sol=Solve[And@@exprs,Join[Array[Symbol["q"<>ToString[#]]&,Length[hMat]-1],{weight1,weight2}]]},
 If[Length[sol]!=1,Message[PerfectMatching::incoherentWeight],(weight1 h1+weight2 h2+h3)/.sol[[1]]]]]];
 
-DualFan[hMat_,Wp_,Wm_]:=Module[{rpoints},
-rpoints=DeleteDuplicates[With[{perfs=ListPerfectMatchings[Wp,Wm]},{D[#,h1],D[#,h2]}&/@(PerfectMatchingWeight[#,hMat]&/@perfs)]];
+DualFan[hMat_,Wp_,Wm_]:=DualFan[hMat,ListPerfectMatchings[Wp,Wm]];
+
+DualFan[hMat_,Perfs_]:=Module[{rpoints},
+rpoints=DeleteDuplicates[{D[#,h1],D[#,h2]}&/@(PerfectMatchingWeight[#,hMat]&/@Perfs)];
 rpoints=With[{shift={MinimalBy[rpoints[[;;,1]],Abs][[1]],MinimalBy[rpoints[[;;,2]],Abs][[1]]}},(#-shift)&/@rpoints];
 LCM@@Denominator/@Flatten[rpoints]*rpoints];
 
-GetExternalPoints[Fan_]:=With[{mesh=ConvexHullMesh[Fan]},MeshCoordinates[mesh][[MeshCells[mesh,2][[1,1]]]]];
+ExternalPoints[Fan_]:=With[{mesh=ConvexHullMesh[Fan]},MeshCoordinates[mesh][[MeshCells[mesh,2][[1,1]]]]];
 
 ShortestCycleWeight[hMat_,node_,Cut_:{},maxIters_:1000]:=Module[{queue,weight,w,n,count},
 weight=0;count=0;queue=CreateDataStructure["Queue"];queue["Push",{0,node}];
