@@ -2788,8 +2788,8 @@ ChargeFunction[hMat_,fMat_,Crys_,i_,z_]:=Product[z-r,{r,fMat[[2,i]]}]/Product[z-
 
 AddToCrystal[hMat_,fMat_,i_,Crys_]:=Module[{Psi,FListDen,FList,ResidueList},
 Psi=Factor[ChargeFunction[hMat,fMat,Crys,i,z]];
-FListDen=Table[{i,z}/.Solve[f[[1]]==0,z][[1]],{f,Drop[FactorList[Denominator[Psi]],1]}];
-FList=Table[z/.Simplify[Solve[f[[1]]==0,z][[1]]],{f,Select[Drop[FactorList[Psi/.h3->0],1],#[[2]]==-1&]}];
+FListDen=Table[{i,z}/.Solve[f[[1]]==0,z][[1]],{f,Select[FactorList[Denominator[Psi]],D[#[[1]],z]!=0&]}];
+FList=Table[z/.Simplify[Solve[f[[1]]==0,z][[1]]],{f,Select[FactorList[Psi/.h3->0],(#[[2]]==-1&&D[#[[1]],z]!=0)&]}];
 ResidueList=Select[FListDen,MemberQ[FList,Simplify[#[[2]]/.h3->0]]&];
 Complement[ResidueList,Crys]
 ];
@@ -2806,7 +2806,6 @@ GrowCrystalList[hMat_,fMat_,CrysList_]:=Module[{Li,CrysList2},
 CrysList2={};
 Do[PrintTemporary["Adding atoms of type ",i];Do[
 Li=AddToCrystal[hMat,fMat,i,Crys];
-Do[AppendTo[CrysList2,Union[Append[Crys,atom]]],{atom,Li}];
 ,{Crys,CrysList}];
 ,{i,Length[hMat]}];
 DeleteDuplicates[CrysList2]];
