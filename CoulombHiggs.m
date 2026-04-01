@@ -584,6 +584,8 @@ NCDTSeriesFromCrystal::usage="NCDTSeriesFromCrystal[hMat_, fMat_, theta_, phi_, 
 
 UnrefinedSeriesFromCrystal::usage="UnrefinedSeriesFromCrystal[hMat_,fMat_,Nn_] constructs the generating function of unrefined NCDT invariants (y=1) or molten crystals (y=-1) and framing data fMat using the Quiver Yangian algorithm, for dimension vectors with height up to NMax.";
 
+D4FramedNCDTSeries::usage="D4FramedNCDTSeries[hMat_,Wp_,Wm_,i_,j_,k_,Nn_] constructs the generating function of refined NCDT invariants with a D4 framing for dimension vectors up to Nn, for the quiver with height matrix hMat and potential Wp-Wm, with the D4 framing associated to the arrow Phi[i,j,k]. If this arrow does not correspond to any non-compact 4-cycle, an error will pop-up.";
+
 D6Framing::usage="D6Framing[hMat_,i_] constructs the framing data fMat for a D6-brane associated to node i";
 
 D4Framing::usage="D4Framing[hMat_,i_,j_,k_] constructs the framing data for a D4-brane associated to arrow Phi_{ij}^k";
@@ -803,7 +805,7 @@ PerfectMatching::incoherentWeight="There is an incoherence in the perfect matchi
 ShortestCycleWeight::noCycle="There is no cycle in the possibly cut quiver and starting from the given node.";
 
 ToricFan::CornerIndexLimit="The toric fan doesn't have enough sides/corners. The index given is too high.";
-
+ToricFan::MissingArrow="This arrow does not come from two connected sides of the toric fan, and is not associated to a corner of the toric fan.";
 
 
 Begin["`Private`"]
@@ -2742,6 +2744,13 @@ SymmetricDifference[If[z==Length[extpoints],perf[1],perf[z+1]],perf[z]]],
 Length[extpoints]]]]];
 
 EulerNorm[hMat_,Nvec_]:=Sum[Nvec[[i]]^2,{i,Length[hMat]}]-Sum[Length[hMat[[i,j]]]Nvec[[i]]Nvec[[j]],{i,Length[hMat]},{j,Length[hMat]}];
+
+D4FramedNCDTSeries[hMat_,Wp_,Wm_,i_,j_,k_,Nn_]:=With[{perfs=ListPerfectMatchings[Wp,Wm]},
+With[{dict=D4FramingDictionary[hMat,perfs],nbpoints=Length[ExternalPoints[DualFan[hMat,perfs]]]},
+If[Head[FirstPosition[dict,{i,j,k}]]===Missing,Message[ToricFan::MissingArrow],
+With[{corner=FirstPosition[dict,{i,j,k}][[1]]},
+With[{weight=SideWeight[hMat,perfs,corner]+Sqrt[2] SideWeight[hMat,perfs,If[corner==1,nbpoints,corner-1]]},
+NCDTSeriesFromCrystal[hMat,D4Framing[hMat,i,j,k],weight,Nn]]]]]];
 
 NCDTSeriesFromCrystal[hMat_,fMat_,theta_,phi_,Nn_]:=NCDTSeriesFromCrystal[hMat,fMat,Cos[theta]*(Cos[phi]*h1+Sin[phi]*h2)+Sin[theta]*h3,Nn];
 
