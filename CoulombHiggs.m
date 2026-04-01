@@ -2806,6 +2806,7 @@ GrowCrystalList[hMat_,fMat_,CrysList_]:=Module[{Li,CrysList2},
 CrysList2={};
 Do[PrintTemporary["Adding atoms of type ",i];Do[
 Li=AddToCrystal[hMat,fMat,i,Crys];
+Do[AppendTo[CrysList2,Union[Append[Crys,atom]]],{atom,Li}]
 ,{Crys,CrysList}];
 ,{i,Length[hMat]}];
 DeleteDuplicates[CrysList2]];
