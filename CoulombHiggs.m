@@ -626,6 +626,8 @@ ListPerfectMatchings::usage="ListPerfectMatchings[Wp_,Wm_] produces the list of 
 
 PerfectMatchingWeight::usage="PerfectMatchingWeight[Perf_,hMat_] gives the weight of the perfect matching Perf, given the height matrix hMat";
 
+DimensionVectors::usage="DimensionVectors[hMat_,Cut_] gives an ordered list of the dimension vectors of each connected component of the quiver given by hMat cut by Cut.";
+
 ShortestCycleWeight::usage="ShortestCycleWeight[hMat_,node_,Cut_,maxIters_] computes the weight of the shortest cycle starting from node, for the quiver whose height matrix is hMat, with the arrows from Cut removed. The algorithm stops after maxIters iterations. If Cut is omitted, no arrow is removed. If maxIters is omitted, the algorithm will stop after 1000 iterations. If multiple cycles are equally long, the algorithm will choose one arbitrarily";
 
 SideWeight::usage="SideWeight[hMat_,Wp_,Wm_,z_] or SideWeight[hMat_,Perfs_,z_] computes the weight lz associated to the side lying between the z and z+1 corners of the dual toric fan, for a quiver of height matrix hMat and potential Wp-Wm. The order of the dual toric fan corners is given by applying ExternalPoints to DualFan";
@@ -809,6 +811,7 @@ ShortestCycleWeight::noCycle="There is no cycle in the possibly cut quiver and s
 ToricFan::CornerIndexLimit="The toric fan doesn't have enough sides/corners. The index given is too high.";
 ToricFan::MissingArrow="This arrow does not come from two connected sides of the toric fan, and is not associated to a corner of the toric fan.";
 
+Weight::NotGeneral="The chosen weight is not general enough. There exists some weight orthogonal to it."
 
 Begin["`Private`"]
 
@@ -2908,6 +2911,23 @@ rpoints=With[{shift={MinimalBy[rpoints[[;;,1]],Abs][[1]],MinimalBy[rpoints[[;;,2
 LCM@@Denominator/@Flatten[rpoints]*rpoints];
 
 ExternalPoints[Fan_]:=With[{mesh=ConvexHullMesh[Fan]},MeshCoordinates[mesh][[MeshCells[mesh,2][[1,1]]]]];
+
+DimensionVectors[hMat_,Cut_]:=With[{nodes=Range[Length[hMat]]},
+Module[{dims,queue,nextnodes,node},dims={};nextnodes={1};
+While[Length[Flatten[dims]]<Length[nodes],
+queue=CreateDataStructure["Queue"];
+AppendTo[dims,{nextnodes[[1]]}];
+queue["Push",nextnodes[[1]]];
+nextnodes={};
+While[!queue["EmptyQ"],node=queue["Pop"];
+Do[If[ContainsNone[dims[[-1]],{i}],
+If[Length[hMat[[node,i]]]>0,
+If[Length[hMat[[node,i]]]==Length[Cases[Cut,{node,i,x_}]],
+AppendTo[nextnodes,i],
+AppendTo[dims[[-1]],i];
+queue["Push",i]]]],{i,Length[hMat]}]];
+nextnodes=Complement[nextnodes,Flatten[dims]]];
+(li|->Array[If[ContainsAny[li,{#}],1,0]&,Length[hMat]])/@dims]];
 
 ShortestCycleWeight[hMat_,node_,Cut_:{},maxIters_:1000]:=Module[{queue,weight,w,n,count},
 weight=0;count=0;queue=CreateDataStructure["Queue"];queue["Push",{0,node}];
