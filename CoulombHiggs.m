@@ -2751,8 +2751,10 @@ D4FramedNCDTSeries[hMat_,Wp_,Wm_,i_,j_,k_,Nn_]:=With[{perfs=ListPerfectMatchings
 With[{dict=D4FramingDictionary[hMat,perfs],nbpoints=Length[ExternalPoints[DualFan[hMat,perfs]]]},
 If[Head[FirstPosition[dict,{i,j,k}]]===Missing,Message[ToricFan::MissingArrow],
 With[{corner=FirstPosition[dict,{i,j,k}][[1]]},
-With[{weight=SideWeight[hMat,perfs,corner]+Sqrt[2] SideWeight[hMat,perfs,If[corner==1,nbpoints,corner-1]]},
-NCDTSeriesFromCrystal[hMat,D4Framing[hMat,i,j,k],weight,Nn]]]]]];
+With[{w1=D[SideWeight[hMat,perfs,corner], #] & /@ {h1, h2},w2=D[SideWeight[hMat,perfs,If[corner==1,nbpoints,corner-1]], #] & /@ {h1, h2}},
+With[{w=w1/Sqrt[Total[w1^2]]+(Sqrt[2]-0.4142) w2/Sqrt[Total[w2^2]]},
+With[{weight=w[[1]] h1+w[[2]] h2},
+NCDTSeriesFromCrystal[hMat,D4Framing[hMat,i,j,k],weight,Nn]]]]]]]];
 
 NCDTSeriesFromCrystal[hMat_,fMat_,theta_,phi_,Nn_]:=NCDTSeriesFromCrystal[hMat,fMat,Cos[theta]*(Cos[phi]*h1+Sin[phi]*h2)+Sin[theta]*h3,Nn];
 
