@@ -630,6 +630,8 @@ ShortestCycleWeight::usage="ShortestCycleWeight[hMat_,node_,Cut_,maxIters_] comp
 
 SideWeight::usage="SideWeight[hMat_,Wp_,Wm_,z_] or SideWeight[hMat_,Perfs_,z_] computes the weight lz associated to the side lying between the z and z+1 corners of the dual toric fan, for a quiver of height matrix hMat and potential Wp-Wm. The order of the dual toric fan corners is given by applying ExternalPoints to DualFan";
 
+InternalSidePoints::usage="InternalSidePoints[unrefinedPoints_, side_] gives the number of internal points of the convex hull of unrefinedPoints along the side lying between the z and z+1 corners, where the order of the corners is given by applying ExternalPoints on the corners. The points are counted without multiplicities.";
+
 DualFan::usage="DualFan[hMat_,Wp_,Wm_] or DualFan[hMat_,Perfs_] produces the fan dual to the quiver with potential, described by its height matrix hMat and its potential Wp-Wm or its complete list of perfect matchings Perfs";
 
 PlethysticExp::usage="PlethysticExp[f_,Nn_] computes the plethystic exponential of f, assuming that it is a function of x[i] and y only";
@@ -2887,7 +2889,7 @@ LiPhi=Union[Flatten[Table[List@@WL[[i]],{i,m}]]];
 LiCuts=Subsets[LiPhi,{m/2}];
 Select[LiCuts,(WL/.Table[#[[k]]->0,{k,Length[#]}])===ConstantArray[0,m]&]/.Phi[i_,j_,k_]:>{i,j,k}];
 
-PerfectMatchingWeight[Perf_,hMat_]:=Module[{exprs},exprs={};
+PerfectMatchingWeight[Perf_,hMat_]:=Module[{exprs,weight1,weight2},exprs={};
 With[{perfWeight=Join[Array[Symbol["q"<>ToString[#]]&,Length[hMat]],{weight1,weight2,1}]},
 For[i=1,i<=Length[hMat],i++,For[j=1,j<=Length[hMat[[i]]],j++,For[k=1,k<=Length[hMat[[i,j]]],k++,
 If[ContainsAny[Perf,{{i,j,k}}],
@@ -2923,6 +2925,16 @@ With[{cut=DeleteDuplicates[Join[Perfs[[FirstPosition[dualpoints,extpoints[[z]]][
 If[z==Length[extpoints],Perfs[[FirstPosition[dualpoints,extpoints[[1]]][[1]]]],
 Perfs[[FirstPosition[dualpoints,extpoints[[z+1]]][[1]]]]]]]},
 ShortestCycleWeight[hMat,1,cut]]]];
+
+InternalSidePoints[unrefinedPoints_,side_]:=With[{points=ExternalPoints[unrefinedPoints],upoints=DeleteDuplicates[unrefinedPoints]},
+If[side>Length[points],Message[ToricFan::CornerIndexLimit],
+With[{s2=If[side==Length[points],1,side+1]},
+Module[{count},count=0;
+If[(points[[s2]]-points[[side]])[[1]]==0,If[(#-points[[side]])[[1]]==0,count++],
+If[(points[[s2]]-points[[side]])[[2]]==0,If[(#-points[[side]])[[2]]==0,count++],
+If[(#-points[[side]])[[1]]/(points[[s2]]-points[[side]])[[1]]==(#-points[[side]])[[2]]/(points[[s2]]-points[[side]])[[2]],count++]]]&
+/@upoints;count-2]]]];
+
 
 
 (* ::Subsection:: *)
