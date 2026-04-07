@@ -614,6 +614,8 @@ DirectedSign::usage="DirectedSign[actionWeight_, lambda_] computes the sign for 
 
 WeightScalarProduct::usage="WeightScalarProduct[mu_, lambda_] computes the scalar product between the two weights mu and lambda";
 
+GeneralWeight::usage="GeneralWeight[hMat_,weight_,Nn_:10] computes wether the given weight is a general weight relative to the given height matrix hMat up to order Nn, meaning the weight cannot be obtained by integer positive integer linear combinations of the height matrix weights with less than Nn terms. If Nn is omitted, it is set to 10 by default.";
+
 EulerNorm::usage="EulerNorm[hMat_, Nvec_] computes the Ringel-Tits norm of the dimension vector Nvec from the matrix of heights hMat";
 
 PlotTiling::usage="PlotTiling[hMat_, Nn_, v_, Range_, Shor_, Perf_] produces a 2D plot of the brane tiling defined by the matrix hMat, by iterating the arrows Nn times, removing those which belong to the perfect matching Perf. v is a list of 2D vectors {v1,v2} determining the vector v=x1 v1+x2 v2 associated to an arrow with weight x1 h1 +x2 h2 +x3 h3. The plot range is set to Range, and arrows are shortened by Shor. If the argument Perf is omitted, all arrows are included";
@@ -2762,6 +2764,7 @@ With[{weight=w[[1]] h1+w[[2]] h2},
 NCDTSeriesFromCrystal[hMat,D4Framing[hMat,i,j,k],weight,Nn]]]]]]]];
 
 D6FramedNCDTSeries[hMat_,Wp_,Wm_,i_,Nn_,weight_:-h1+h2/Sqrt[2]]:=
+(If[!GeneralWeight[hMat,weight,Nn],Message[Weight::NotGeneral]];
 With[{perfs=ListPerfectMatchings[Wp,Wm]},
 With[{dfan=DualFan[hMat,perfs]},
 With[{extpoints=ExternalPoints[dfan]},
@@ -2776,7 +2779,6 @@ perfs[[FirstPosition[dfan,extpoints[[#]]][[1]]]],
 If[#==Length[extpoints],perfs[[FirstPosition[dfan,extpoints[[1]]][[1]]]],
 perfs[[FirstPosition[dfan,extpoints[[#+1]]][[1]]]]]]]]&,
 Length[extpoints]]},
-If[ContainsAny[signs,{0}],Message[Weight::NotGeneral]];
 With[{nbparts=Total[Array[If[signs[[#]]==-1,Length[dims[[#]]],0]&,Length[extpoints]]]},
 ((-y)^3-y (nbparts-2)+(nbparts-1)/y)/(1/y-y) 
 Total[Array[pow|->((-y)^(2 pow)-1) (Times@@Array[x[#]&,Length[hMat]])^pow,Floor[Nn/Length[hMat]]]]+
@@ -2800,7 +2802,7 @@ Array[{x[#],0,Nn}&,Length[hMat]]]],
 NCDTSeriesFromCrystal[hMat,D6Framing[hMat,i],weight,Nn],
 Array[Subscript[x,#]&,Length[hMat]]],
 pows_/;Total[pows]<=Nn],
-Array[Subscript[x,#]&,Length[hMat]]]]]]
+Array[Subscript[x,#]&,Length[hMat]]]]]]);
 
 NCDTSeriesFromCrystal[hMat_,fMat_,theta_,phi_,Nn_]:=NCDTSeriesFromCrystal[hMat,fMat,Cos[theta]*(Cos[phi]*h1+Sin[phi]*h2)+Sin[theta]*h3,Nn];
 
@@ -2887,6 +2889,15 @@ CrystalWeight[hMat_,fMat_,actionWeight_,Crys_]:= -Sum[Sum[If[lambda[[1]]==mu[[1]
 DirectedSign[actionWeight_,lambda_]:=Sign[WeightScalarProduct[actionWeight,lambda]];
 
 WeightScalarProduct[mu_,lambda_]:=Sum[D[mu, i] D[lambda, i], {i, {h1,h2,h3}}]
+
+GeneralWeight[hMat_,weight_,Nn_:10]:=
+With[{ws=(D[#,h1]h1+D[#,h2]h2)&/@Flatten[hMat]},
+Module[{ret},ret=True;
+Do[If[w=!=0&&WeightScalarProduct[w,weight]==0,
+ret=False;Break[]],
+{w,Expand[Total[ws #]]&/@(Flatten[Array[List, Array[2 &, Length[ws]]], 
+  Depth[Array[List, Array[Nn + 1 &, Length[ws]]]] - 3] - 1)}];
+ret]];
 
 PlotTiling[hMat_,Nn_,v_,Rang_,Shor_,Perf_:{}]:=Module[{ArrowList,ArrowList2,Labels,v1,v2},
 (* produces a list of (color of endpoint, starting point, endpoint, iterating N times excluding arrows in Perf *)
