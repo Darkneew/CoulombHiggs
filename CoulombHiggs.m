@@ -586,6 +586,8 @@ UnrefinedSeriesFromCrystal::usage="UnrefinedSeriesFromCrystal[hMat_,fMat_,Nn_] c
 
 D4FramedNCDTSeries::usage="D4FramedNCDTSeries[hMat_,Wp_,Wm_,i_,j_,k_,Nn_] constructs the generating function of refined NCDT invariants with a D4 framing for dimension vectors up to Nn, for the quiver with height matrix hMat and potential Wp-Wm, with the D4 framing associated to the arrow Phi[i,j,k]. If this arrow does not correspond to any non-compact 4-cycle, an error will pop-up.";
 
+D6FramedNCDTSeries::usage="D6FramedNCDTSeries[hMat_,Wp_,Wm_,i_,Nn_,weight_] constructs the generating function of refined NCDT invariants with a D6 framing in node i for dimension vectors up to Nn, for the quiver with height matrix hMat and potential Wp-Wm. If no weight is specificed, a default weight will be used. If the weight is not valid, a message will pop up to say it.";
+
 D6Framing::usage="D6Framing[hMat_,i_] constructs the framing data fMat for a D6-brane associated to node i";
 
 D4Framing::usage="D4Framing[hMat_,i_,j_,k_] constructs the framing data for a D4-brane associated to arrow Phi_{ij}^k";
@@ -2758,6 +2760,47 @@ With[{w1=D[SideWeight[hMat,perfs,corner], #] & /@ {h1, h2},w2=D[SideWeight[hMat,
 With[{w=w1/Sqrt[Total[w1^2]]+(Sqrt[2]-0.4142) w2/Sqrt[Total[w2^2]]},
 With[{weight=w[[1]] h1+w[[2]] h2},
 NCDTSeriesFromCrystal[hMat,D4Framing[hMat,i,j,k],weight,Nn]]]]]]]];
+
+D6FramedNCDTSeries[hMat_,Wp_,Wm_,i_,Nn_,weight_:-h1+h2/Sqrt[2]]:=
+With[{perfs=ListPerfectMatchings[Wp,Wm]},
+With[{dfan=DualFan[hMat,perfs]},
+With[{extpoints=ExternalPoints[dfan]},
+FromCoefficientRules[FilterRules[
+CoefficientRules[(FromCoefficientRules[CoefficientRules[
+Normal[Series@@Join[{PlethysticExp[
+With[{signs=Sign[Total[{D[weight,h1],D[weight,h2]} #]]&
+/@({D[#,h1],D[#,h2]}&
+/@Array[SideWeight[hMat,perfs,#]&,Length[extpoints]]),
+dims=Array[DimensionVectors[hMat,DeleteDuplicates[Join[
+perfs[[FirstPosition[dfan,extpoints[[#]]][[1]]]],
+If[#==Length[extpoints],perfs[[FirstPosition[dfan,extpoints[[1]]][[1]]]],
+perfs[[FirstPosition[dfan,extpoints[[#+1]]][[1]]]]]]]]&,
+Length[extpoints]]},
+If[ContainsAny[signs,{0}],Message[Weight::NotGeneral]];
+With[{nbparts=Total[Array[If[signs[[#]]==-1,Length[dims[[#]]],0]&,Length[extpoints]]]},
+((-y)^3-y (nbparts-2)+(nbparts-1)/y)/(1/y-y) 
+Total[Array[pow|->((-y)^(2 pow)-1) (Times@@Array[x[#]&,Length[hMat]])^pow,Floor[Nn/Length[hMat]]]]+
+Total[Array[z|->If[signs[[z]]==-1,Array[k|->Array[kk|->
+With[{vec=Total[Array[in|->If[in>=kk,dims[[z,in]],0],k-1]]},
+If[Total[vec]==0,0,Total[Array[(
+((-y)^(2 (#-1+vec[[i]]))-1) 
+(Times@@Array[nod|->If[vec[[nod]]==1,x[nod],1],Length[hMat]]) 
+(Times@@Array[nod|->x[nod],Length[hMat]])^(#-1))&,
+Floor[(Nn-Total[vec])/Length[hMat]]+1]]]]+
+With[{vec=Total[Array[in|->If[in<kk||in>=k,dims[[z,in]],0],Length[dims[[z]]]]]},
+If[Total[vec]==0,0,Total[Array[(
+((-y)^(2 (#-1+vec[[i]]))-1) 
+(Times@@Array[nod|->If[vec[[nod]]==1,x[nod],1],Length[hMat]]) 
+(Times@@Array[nod|->x[nod],Length[hMat]])^(#-1))&,
+Floor[(Nn-Total[vec])/Length[hMat]]+1]]]],k-1],
+Length[dims[[z]]]],0],Length[extpoints]],3]]],Nn]},
+Array[{x[#],0,Nn}&,Length[hMat]]]],
+{x[i]}]/.{({x_}->z_)->({x}->(-y)^(-x)z)},
+{x[i]}]/.{x[var_]->Subscript[x,var]})
+NCDTSeriesFromCrystal[hMat,D6Framing[hMat,i],weight,Nn],
+Array[Subscript[x,#]&,Length[hMat]]],
+pows_/;Total[pows]<=Nn],
+Array[Subscript[x,#]&,Length[hMat]]]]]]
 
 NCDTSeriesFromCrystal[hMat_,fMat_,theta_,phi_,Nn_]:=NCDTSeriesFromCrystal[hMat,fMat,Cos[theta]*(Cos[phi]*h1+Sin[phi]*h2)+Sin[theta]*h3,Nn];
 
