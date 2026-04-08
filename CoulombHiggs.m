@@ -2900,15 +2900,15 @@ CrystalWeight[hMat_,fMat_,actionWeight_,Crys_]:= -Sum[Sum[If[lambda[[1]]==mu[[1]
 
 DirectedSign[actionWeight_,lambda_]:=Sign[WeightScalarProduct[actionWeight,lambda]];
 
-WeightScalarProduct[mu_,lambda_]:=Sum[D[mu, i] D[lambda, i], {i, {h1,h2,h3}}]
+WeightScalarProduct[mu_,lambda_]:=Sum[D[mu, i] D[lambda, i], {i, {h1,h2,h3}}];
 
 GeneralWeight[hMat_,weight_,Nn_:10]:=
 With[{ws=(D[#,h1]h1+D[#,h2]h2)&/@Flatten[hMat]},
 Module[{ret},ret=True;
 Do[If[w=!=0&&WeightScalarProduct[w,weight]==0,
 ret=False;Break[]],
-{w,Expand[Total[ws #]]&/@(Flatten[Array[List, Array[2 &, Length[ws]]], 
-  Depth[Array[List, Array[Nn + 1 &, Length[ws]]]] - 3] - 1)}];
+{w,Expand[Total[ws #]]&/@(Flatten[Array[List,Array[Nn+1&,Length[ws]]],
+Depth[Array[List,Array[Nn+1&,Length[ws]]]]-3]-1)}];
 ret]];
 
 PlotTiling[hMat_,Nn_,v_,Rang_,Shor_,Perf_:{}]:=Module[{ArrowList,ArrowList2,Labels,v1,v2},
