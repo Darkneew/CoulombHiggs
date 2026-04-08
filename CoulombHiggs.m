@@ -2,9 +2,9 @@
 
 (*********************************************************************
  *
- *  CoulombHiggs.m 6.2            
+ *  CoulombHiggs.m 7.0            
  *                                                          
- *  Copyright B. Pioline, April 2021
+ *  Copyright B. Pioline, April 2026
  *
  *  Distributed under the terms of the GNU General Public License 
  *
@@ -123,6 +123,18 @@
  * - Fixed gLR in TreeIndexOpt such that it does not include QuiverMultiplierMat
  * - Fixed FlowTreeFormula, added argument y to FlowTreeFormulaRat
  * - Added TropicalVertex
+ *
+ * Release notes for 7.0:
+ * - Added DisplayArrowMatrix, WeightScalarProduct, GeneralWeight
+ * - Added PerfectMatchingWeight, ShortestCycleWeight, SideWeight, 
+ * - Added DualFan, InternalSidePoints, GetExternalPoints, DimensionVectors
+ * - Added D4FramedNCDTSeries, D4FramingDictionary, D6FramedNCDTSeries
+ * - Fixed ListPerfectMatchings, HeightMatrixFromPotential, AddToCrystal
+ * - Adjusted D4Framing, PlotTiling3D to match expected behaviour
+ * - Angle arguments can now be replaced by a weight argument in NCDTSeriesFromCrystal
+ * - Replaced the angle argument by a weight argument in CrystalWeight and DirectedSign
+ * - Potential terms Wp and Wm are now non-commutative
+ * - Added various safeguards and error messages for quiver routines 
  
  
  

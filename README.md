@@ -106,7 +106,7 @@ History of changes:
  * Release notes for 6.0:
  * - Added QuiverMultiplierMat, $QuiverMultiplierAssumption
  * - Updated demo notebooks
- * 
+ *
  * Release notes for 6.1:
  * - Added TreeIndexOpt
  * - Removed PMat argument from TreeIndex
@@ -115,9 +115,24 @@ History of changes:
  * - Added data for Y30, Y31 
  * - Nmin and Nmax in NCDTSeriesFromOmAtt/OmS are now dimension vectors
  * - Added CyclicQuiverOmAtt,CyclicQuiverOmAttUnrefined,CyclicQuiverTrivialStacky 
- *  
+ *
  * Release notes for 6.2:
  * - Added ExtendedCoulombIndex, CoulombIndexResidue, FindCollinearSolutions
  * - Added ListClusters,  CoulombBranchFormulaNum,  CoulombBranchResidue
+ * - Fixed gLR in TreeIndexOpt such that it does not include QuiverMultiplierMat
+ * - Fixed FlowTreeFormula, added argument y to FlowTreeFormulaRat
+ * - Added TropicalVertex
+ *
+ * Release notes for 7.0:
+ * - Added DisplayArrowMatrix, WeightScalarProduct, GeneralWeight
+ * - Added PerfectMatchingWeight, ShortestCycleWeight, SideWeight, 
+ * - Added DualFan, InternalSidePoints, GetExternalPoints, DimensionVectors
+ * - Added D4FramedNCDTSeries, D4FramingDictionary, D6FramedNCDTSeries
+ * - Fixed ListPerfectMatchings, HeightMatrixFromPotential, AddToCrystal
+ * - Adjusted D4Framing, PlotTiling3D to match expected behaviour
+ * - Angle arguments can now be replaced by a weight argument in NCDTSeriesFromCrystal
+ * - Replaced the angle argument by a weight argument in CrystalWeight and DirectedSign
+ * - Potential terms Wp and Wm are now non-commutative
+ * - Added various safeguards and error messages for quiver routines 
  
 
