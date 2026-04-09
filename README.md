@@ -125,8 +125,8 @@ History of changes:
  *
  * Release notes for 7.0:
  * - Added DisplayArrowMatrix, WeightScalarProduct, GeneralWeight
- * - Added PerfectMatchingWeight, ShortestCycleWeight, SideWeight, 
- * - Added DualFan, InternalSidePoints, GetExternalPoints, DimensionVectors
+ * - Added PerfectMatchingWeight, ShortestCycleWeight, SideWeight
+ * - Added DualFan, InternalSidePoints, ExternalPoints, DimensionVectors
  * - Added D4FramedNCDTSeries, D4FramingDictionary, D6FramedNCDTSeries
  * - Fixed ListPerfectMatchings, HeightMatrixFromPotential, AddToCrystal
  * - Adjusted D4Framing, PlotTiling3D to match expected behaviour

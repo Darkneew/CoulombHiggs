@@ -126,8 +126,8 @@
  *
  * Release notes for 7.0:
  * - Added DisplayArrowMatrix, WeightScalarProduct, GeneralWeight
- * - Added PerfectMatchingWeight, ShortestCycleWeight, SideWeight, 
- * - Added DualFan, InternalSidePoints, GetExternalPoints, DimensionVectors
+ * - Added PerfectMatchingWeight, ShortestCycleWeight, SideWeight
+ * - Added DualFan, InternalSidePoints, ExternalPoints, DimensionVectors
  * - Added D4FramedNCDTSeries, D4FramingDictionary, D6FramedNCDTSeries
  * - Fixed ListPerfectMatchings, HeightMatrixFromPotential, AddToCrystal
  * - Adjusted D4Framing, PlotTiling3D to match expected behaviour
@@ -139,7 +139,7 @@
  
  
  *********************************************************************)
-Print["CoulombHiggs 6.3 - A package for evaluating quiver invariants"];
+Print["CoulombHiggs 7.0 - A package for evaluating quiver invariants"];
 
 
 BeginPackage["IndexVars`"];
@@ -754,7 +754,7 @@ QuiverPlot::usage = "QuiverPlot[Mat_] displays the quiver with DSZ matrix Mat (o
 
 PlotQuiver::usage = "PlotQuiver[Mat_] displays the quiver with DSZ matrix or height matrix Mat ";
 
-DisplayArrowMatrix::usage = "DisplayArrowMatrix[Mat_] displays the number of arrows in the quiver with height matrix Mat in a matrix format"
+DisplayArrowMatrix::usage = "DisplayArrowMatrix[hMat_] displays the number of arrows in the quiver with height matrix Mat in a matrix format"
 
 HirzebruchR::usage = "HirzebruchR[J_,v_] is the function R_v(J) entering in the Hirzebruch-Riemann-Roch formula ";
 
