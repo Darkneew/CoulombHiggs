@@ -644,7 +644,7 @@ PerfectMatchingWeight::usage="PerfectMatchingWeight[Perf_,hMat_] gives the weigh
 
 DimensionVectors::usage="DimensionVectors[hMat_,Cut_] gives an ordered list of the dimension vectors of each connected component of the quiver given by hMat cut by Cut.";
 
-ShortestCycleWeight::usage="ShortestCycleWeight[hMat_,node_,Cut_,maxIters_] computes the weight of the shortest cycle starting from node, for the quiver whose height matrix is hMat, with the arrows from Cut removed. The algorithm stops after maxIters iterations. If Cut is omitted, no arrow is removed. If maxIters is omitted, the algorithm will stop after 1000 iterations. If multiple cycles are equally long, the algorithm will choose one arbitrarily";
+ShortestCycleWeight::usage="ShortestCycleWeight[hMat_,node_,Cut_,maxIters_] computes the weight of the shortest cycle starting from node, for the quiver whose height matrix is hMat, with the arrows from Cut removed. The algorithm stops after maxIters iterations. If Cut is omitted, no arrow is removed. If maxIters is omitted, the algorithm will stop after 10 iterations. If multiple cycles are equally long, the algorithm will choose one arbitrarily";
 
 SideWeight::usage="SideWeight[hMat_,Wp_,Wm_,z_] or SideWeight[hMat_,Perfs_,z_] computes the weight lz associated to the side lying between the z and z+1 corners of the dual toric fan, for a quiver of height matrix hMat and potential Wp-Wm. The order of the dual toric fan corners is given by applying ExternalPoints to DualFan";
 
@@ -2995,7 +2995,7 @@ queue["Push",i]]]],{i,Length[hMat]}]];
 nextnodes=Complement[nextnodes,Flatten[dims]]];
 (li|->Array[If[ContainsAny[li,{#}],1,0]&,Length[hMat]])/@dims]];
 
-ShortestCycleWeight[hMat_,node_,Cut_:{},maxIters_:1000]:=Module[{queue,weight,w,n,count},
+ShortestCycleWeight[hMat_,node_,Cut_:{},maxIters_:10]:=Module[{queue,weight,w,n,count},
 weight=0;count=0;queue=CreateDataStructure["Queue"];queue["Push",{0,node}];
 While[(!queue["EmptyQ"])&&weight===0,{w,n}=queue["Pop"];
 For[j=1,j<=Length[hMat[[n]]],j++,For[k=1,k<=Length[hMat[[n,j]]],k++,
