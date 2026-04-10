@@ -598,7 +598,7 @@ UnrefinedSeriesFromCrystal::usage="UnrefinedSeriesFromCrystal[hMat_,fMat_,Nn_] c
 
 D4FramedNCDTSeries::usage="D4FramedNCDTSeries[hMat_,Wp_,Wm_,i_,j_,k_,Nn_] constructs the generating function of refined NCDT invariants with a D4 framing for dimension vectors up to Nn, for the quiver with height matrix hMat and potential Wp-Wm, with the D4 framing associated to the arrow Phi[i,j,k]. If this arrow does not correspond to any non-compact 4-cycle, an error will pop-up.";
 
-D6FramedNCDTSeries::usage="D6FramedNCDTSeries[hMat_,Wp_,Wm_,i_,Nn_,weight_] constructs the generating function of refined NCDT invariants with a D6 framing in node i for dimension vectors up to Nn, for the quiver with height matrix hMat and potential Wp-Wm. If no weight is specificed, a default weight will be used. If the weight is not valid, a message will pop up to say it.";
+D6FramedNCDTSeries::usage="D6FramedNCDTSeries[hMat_,Wp_,Wm_,i_,Nn_,weight_,maxWeightIter_] constructs the generating function of refined NCDT invariants with a D6 framing in node i for dimension vectors up to Nn, for the quiver with height matrix hMat and potential Wp-Wm. If no weight is specificed, a default weight will be used. The algorithm will check wether the weight is valid or not up to order maxWeightIter, which is set to 4 by default.";
 
 D6Framing::usage="D6Framing[hMat_,i_] constructs the framing data fMat for a D6-brane associated to node i";
 
@@ -2775,8 +2775,8 @@ With[{w=w1/Sqrt[Total[w1^2]]+(Sqrt[2]-0.4142) w2/Sqrt[Total[w2^2]]},
 With[{weight=w[[1]] h1+w[[2]] h2},
 NCDTSeriesFromCrystal[hMat,D4Framing[hMat,i,j,k],weight,Nn]]]]]]]];
 
-D6FramedNCDTSeries[hMat_,Wp_,Wm_,i_,Nn_,weight_:-h1+h2/Sqrt[2]]:=
-(If[!GeneralWeight[hMat,weight,Nn],Message[Weight::NotGeneral]];
+D6FramedNCDTSeries[hMat_,Wp_,Wm_,i_,Nn_,weight_:-h1+h2/Sqrt[2],maxWeightIter_:4]:=
+(If[!GeneralWeight[hMat,weight,Min[Nn,maxWeightIter]],Message[Weight::NotGeneral]];
 With[{perfs=ListPerfectMatchings[Wp,Wm]},
 With[{dfan=DualFan[hMat,perfs]},
 With[{extpoints=ExternalPoints[dfan]},
