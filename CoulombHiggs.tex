@@ -1,6 +1,6 @@
 
 \documentclass[12pt]{JHEP3}
-\usepackage{epsfig,amsfonts,amssymb,amsmath} 
+\usepackage{amsfonts,amssymb,amsmath} 
  
 %\setlength{\topmargin}{.5cm}
 %\setlength{\textheight}{23.1cm}Denef
@@ -110,7 +110,7 @@
 
 \def\newdefy{\vardef{y}}
 
-\title{CoulombHiggs.m v6.3}
+\title{CoulombHiggs.m v7.0}
  
 \author{Boris Pioline}
 
@@ -132,7 +132,7 @@ and from  {\tt https://github.com/bpioline/CoulombHiggs}
 
 \section{Summary}
 
-The  {\sc Mathematica} package {\tt CoulombHiggs.m} provides a suite of routines compute (specializations of) the Hodge polynomial 
+The  {\sc Mathematica} package {\tt CoulombHiggs.m} provides a suite of routines compute (specializations of) the Hodge polynomial 
 \be
 \label{defOm}
 \Omega(\gamma,\zeta,y,t) := 
@@ -152,8 +152,8 @@ in terms of the {\it stack invariants} $G_{\rm Higgs}(\gamma,\zeta,y,t)$ defined
 \begin{split}
 \bOm(\gamma,\zeta,y,t) 
   =& %\sum_\ell 
-  \sum_{\{\vec M^{(i)}\} \atop {
-  \sum_{i=1}^\ell \vec M^{(i)}=\vec N \atop  \vec M^{(i)}\parallel \vec N
+  \sum_{\substack{\{\vec M^{(i)}\} \\
+  \sum_{i=1}^\ell \vec M^{(i)}=\vec N \\  \vec M^{(i)}\parallel \vec N
   \,\mathrm{for}\,\, i=1,\dots,\ell}}
 \frac{1}{\ell\,(y-1/y)^{\ell-1}}  
 %\\& \times 
@@ -223,12 +223,12 @@ can be obtained from the author's webpage,
 Assuming that the file {\tt CoulombHiggs.m} is present in the user's {\sc Mathematica} Application 
 directory, the package is loaded by entering 
 
-\mathematica{1.0}{ <<CoulombHiggs`}{CoulombHiggs 6.0 - A package for evaluating quiver invariants. }
+\mathematica{1.0}{ <<CoulombHiggs`}{CoulombHiggs 7.0 - A package for evaluating quiver invariants. }
 
 If the file  {\tt CoulombHiggs.m} has not yet been copied in the user's {\sc Mathematica} Application 
 directory but is in the same directory as the notebook, evaluate instead
 
-\mathematica{1.0}{SetDirectory[NotebookDirectory[]]; <<CoulombHiggs`}{CoulombHiggs 6.0- A package for evaluating quiver invariants.}
+\mathematica{1.0}{SetDirectory[NotebookDirectory[]]; <<CoulombHiggs`}{CoulombHiggs 7.0- A package for evaluating quiver invariants.}
 
 \subsubsection{Coulomb branch formula}
 
@@ -391,19 +391,35 @@ These heights, as well as the bipartite potential $W=W_+-W_-$,  are pre-computed
 \dots
 \end{array}$
 }
-For computing unrefined NCDT invariants for the conifold up to order $x^5$, you may use
+For computing D6 or D4 framed unrefined NCDT invariants for the conifold up to order $x^5$, one may use
 
 \mathematica{1.0}{
 \{Tiling, Fan, hMat, Wp, Wm, v1, v2\} = BraneTilingsData[[2]];
-NCDTSeriesFromCrystal[hMat, \{1, 0\}, 5] }
+UnrefinedSeriesFromCrystal[hMat, D6Framing[hMat, 1], 5]/.y->1}
    {
-   $1 + x[1] + 2 y^3 x[1] x[2] + 4 y^5 x[1]^2 x[2] + 2 y^5 x[1]^3 x[2] + 
- y^4 x[1] x[2]^2 + 8 y^{10} x[1]^2 x[2]^2 + 14 y^{14} x[1]^3 x[2]^2 + 
- 4 y^{13} x[1]^2 x[2]^3$
-}
-and set $y=-1$ in the final result. Setting $y=1$ instead gives the number of molten crystals
-at each order. 
+   $1 + x_1 - 2 x_1 x_2 - 4 x_1^2 x_2 - 2 x_1^3 x_2 +  x_1 x_2^2 + 8 x_1^2 x_2^2 + 14 x_1^3 x_2^2 - 4 x_1^2 x_2^3$
+   }
+  
+\mathematica{1.0}{
+UnrefinedSeriesFromCrystal[hMat, D4Framing[hMat, 1, 2, 1], 5]/.y->1}
+   {
+   $1 + x_1 + 2 x_1 x_2 + 4 x_1^2 x_2 + 2 x_1^3 x_2 +  x_1 x_2^2 + 8 x_1^2 x_2^2 + 14 x_1^3 x_2^2 + 4 x_1^2 x_2^3$
+   }
+Setting $y=-1$ instead gives the number of molten crystals
+at each order. For computing the refined version of these invariants, one may use
 
+\mathematica{1.0}{
+D6FramedNCDTSeries[hMat, Wp, Wm, 1, 5] }
+   {
+   $1 + x_1 + (-y - y^3) x_1 x_2 + (-1/y - 2 y - y^3) x_1^2 x_2 + (-1/y - y) x_1^3 x_2 +  x_1 x_2^2 + (2 + 3 y^2 + 2 y^4 +     y^6) x_1^2 x_2^2 + (3 + 1/y^2 + 6 y^2 +     3 y^4 + y^6) x_1^3 x_2^2 + (-1/y - 2 y - y^3) x_1^2 x_2^3$
+   }
+  
+\mathematica{1.0}{
+D4FramedNCDTSeries[hMat, Wp, Wm, 1, 2, 1, 5] }
+   {
+   $1 + x_1 + (1/y^2 + y^2) x_1 x_2 + (2 + 1/y^2 + y^2) x_1^2 x_2 + 2 
+x_1^3 x_2 +  x_1 x_2^2 + (2 + 1/y^4 + 2/y^2 +     2 y^2 + y^4) x_1^2 x_2^2 + (4 + 1/y^4 + 4/y^2 +     4 y^2 + y^4) x_1^3 x_2^2 + (2 + 1/y^2 + y^2) x_1^2 x_2^3$
+   }
 
 \subsection{Online documentation}
 
@@ -420,7 +436,7 @@ an early version of the Jeffrey-Kirwan residue formula. Version 4.0, released al
 introduced  more robust implementation of the Jeffrey-Kirwan residue formula.
 Version 6.0, released along with \cite{BPMozgovoy}, introduces the attractor tree formula and the Quiver Yangian algorithm, along with many routines for dealing with brane tilings. 
 Version 6.2, released along with \cite{Beaujard:2021fsk}, includes routines for computing the index of Abelian quivers by solving deformed
-Denef equations. 
+Denef equations. Version 7.0 implements formulas from \cite{Descombes:2021snc} to compute directly D4 and D6 framed refined DT invariants from quivers with potential.\footnote{The routines and functions in this version were implemented by Léo Buisine.} 
 
 
 
@@ -1268,21 +1284,24 @@ $\var{hMat}$ and framing data $\var{fMat}$ using
 the Quiver Yangian algorithm, for dimension
 vectors with height up to $\var{Nn}$. Here $\var{fMat}$ is a list of two elements: the first is
 a matrix of weights $h(q_i^\alpha)$  of arrows $q_i^\alpha:\infty\to i$, and the second is  
-a matrix of weights $h(p_i)$  of arrows $p_i^\beta:\infty\to i$. The result is a generating series 
+a matrix of weights $h(p_i)$  of arrows $p_i^\beta:i\to \infty$. The result is a generating series 
 of Laurent polynomials in $y$,
 which reduces to the unrefined DT invariants at $y=1$, and to the number of molten crystals at $y=-1$. Here $y$ is {\it not} a refinement parameter !}
 
-\defn{NCDTSeriesFromCrystal}{\vardef{hMat}, \vardef{fMat},\vardef{theta}, \vardef{phi}, \vardef{Nmax}}{constructs the generating function of refined NCDT invariants for the quiver with height matrix 
-$\var{hMat}$ and framing data $\var{fMat}$ using 
-the refined Quiver Yangian algorithm with $\mathbb{C}^\times_{\theta,\phi}$ action, for dimension
-vectors with height up to $\var{NMax}$. Here $\var{fMat}$ is a list of two elements: the first is
+\defn{NCDTSeriesFromCrystal}{\vardef{hMat}, \vardef{fMat}, \vardef{weight}\footnote{For backward compatibility with version 6 and below, the argument $\var{weight}$ can be replaced by two arguments \var{theta}, \var{phi} defining the angle of the action, such that $\var{weight} = \cos(\theta)(\cos(\phi)h_1 + \sin(\phi)h_2) + \sin(\theta)h_3$.}, \vardef{Nmax}}{constructs the generating function of (localized) refined NCDT invariants for the quiver with height matrix $\var{hMat}$ and framing data $\var{fMat}$ using the refined Quiver Yangian algorithm, for dimension vectors with height up to $\var{NMax}$. The refinement comes from the localization under the $\mathbb C^\times$ action given by $\var{weight} = w_1 h_1 + w_2 h_2 + w_3 h_3$, chosen inside the canonical $(\mathbb C^\times)^3$ action of the toric variety. If $w_3=0$, the action preserves the superpotential. $\var{fMat}$ is a list of two elements: the first is
 a matrix of weights $h(q_i^\alpha)$  of arrows $q_i^\alpha:\infty\to i$, and the second is  
 a matrix of weights $h(p_i)$  of arrows $p_i^\beta:\infty\to i$. }
 
-\defn{D6Framing}{\vardef{hMat},\vardef{i}}{constructs the framing data \var{fMat} for a D6-brane associated to node $i$, with only one arrow $q_i:\infty\to i$} 
+\defn{D4FramedNCDTSeries}{\vardef{hMat}, \vardef{Wp},\vardef{Wm}, \vardef{i}, \vardef{j}, \vardef{k}, \vardef{Nmax}}{constructs the generating function of the D4 framed (motivic) refined NCDT invariants for the quiver with height matrix $\var{hMat}$ and superpotential $\var{Wp}-\var{Wm}$ and for the framing defined by the arrow $\Phi_{i,j}^k$, for dimension vectors with height up to $\var{NMax}$. The refinement here is motivic/cohomological. If the arrow $\Phi_{i,j}^k$ does not correspond to any non-compact 4-cycle and cannot be used as a D4 framing, a message will say it.}
 
-\defn{D4Framing}{\vardef{hMat},\vardef{i}}{constructs the framing data \var{fMat} for a non-compact D4-brane associated to the $k$-th arrow $i\to j$,  with one arrow $q_i:\infty\to i$,
-one arrow $p_j:j \to \infty$ and superpotential $W=W_0+ p_j \Phi_{ij}^k q_i$} 
+\defn{D6FramedNCDTSeries}{\vardef{hMat}, \vardef{Wp},\vardef{Wm}, \vardef{i}, \vardef{Nmax}, \vardef{weight}}{constructs the generating function of the D6 framed (motivic) refined NCDT invariants for the quiver with height matrix $\var{hMat}$ and superpotential $\var{Wp}-\var{Wm}$ and for the framing defined by the node $i$, for dimension vectors with height up to $\var{NMax}$. The refinement here is motivic/cohomological. $\var{weight}$ is an optional parameter whose value should not affect the result. }
+
+\defn{D6Framing}{\vardef{hMat},\vardef{i}}{constructs the framing data \var{fMat} for a D6-brane associated to node $i$, with only one arrow $q_i:\infty\to i$.} 
+
+\defn{D4Framing}{\vardef{hMat},\vardef{i},\vardef{j},\vardef{k}}{constructs the framing data \var{fMat} for a non-compact D4-brane associated to the $k$-th arrow $i\to j$,  with one arrow $q_i:\infty\to i$,
+one arrow $p_j:j \to \infty$ and superpotential $W=W_0+ p_j \Phi_{ij}^k q_i$.} 
+
+\defn{D4FramingDictionary}{\vardef{hMat},\vardef{Wp},\vardef{Wm}}{given a quiver with height matrix $\var{hMat}$ and superpotential $\var{Wp}-\var{Wm}$, constructs a list with as many entries as there are non-compact 4-cycles in the associated variety, such that the $i^{\text{th}}$ element of the list is the list of arrows in the quiver whose associated D4 framing is the framing by the non-compact 4-cycle associated to the $i^{\text{th}}$ corner of the toric diagram. The ordering of the corners is given by applying successively \fun{DualFan} and \fun{ExternalPoints}.} 
 
 \defn{FramedDSZ}{\vardef{Mat},\vardef{Framing}}{starting from a quiver with DSZ matrix $\var{Mat}$, constructs the DSZ matrix of the framed quiver with $f_i$ arrows from the framing node (labelled 0) to the node $i$.} 
 
@@ -1309,18 +1328,36 @@ to construct the larger list of molten crystals with up to one additional atom o
 \defn{CrystalDim}{\vardef{r},\vardef{Crys}}{computes the dimension vector of the
 crystal $\var{Crys}$, assuming that the colors can take values $1$ up to $r$.}
 
-\defn{CrystaWeight}{\vardef{hMat}, \vardef{fMat}, \vardef{theta},  \vardef{phi},  \vardef{Crys}}
-{computes the power of $y$ associated to the molten crystal $\var{Crys}$, using the $\mathbb{C}^\times$ action specified by the angles $(\theta,\phi)$. The default case $\theta=0$ corresponds to a  
-$\mathbb{C}^\times$ action that preserves the superpotential.}
+\defn{CrystalWeight}{\vardef{hMat}, \vardef{fMat}, \vardef{actionWeight}, \vardef{Crys}}
+{computes the power of $y$ associated to the molten crystal $\var{Crys}$, using the $\mathbb{C}^\times$ action specified by the weight \var{actionWeight}. The $\mathbb{C}^\times$ action preserves the superpotential if \var{actionWeight} doesn't have a term in $h_3$.}
 
-\defn{DirectedSign}{\vardef{theta},  \vardef{phi},  \vardef{lambda}}
-{computes the sign of $\cos\theta ( \lambda_1 \cos\phi +  \sin\phi \lambda_2) + 
-\sin\theta \lambda_3$, where $\lambda=\lambda_1 h_1 + \lambda_2 h_2 + \lambda_3 h_3$,
-used by \fun{CrystalWeight}}
+\defn{DirectedSign}{\vardef{mu}, \vardef{lambda}}
+{computes the sign of $\langle \mu, \lambda\rangle$, potentially null, as defined by \fun{WeightScalarProduct}. It is used by \fun{CrystalWeight}.}
 
+\defn{WeightScalarProduct}{\vardef{mu}, \vardef{lambda}}
+{computes the scalar product $\langle \mu, \lambda\rangle$ of two weight $\mu$ and $\lambda$, that is $\mu_1\lambda_1+\mu_2\lambda_2+\mu_3\lambda_3$ with $\lambda=\lambda_1 h_1 + \lambda_2 h_2 + \lambda_3 h_3$ and $\mu=\mu_1 h_1 + \mu_2 h_2 + \mu_3 h_3$.}
 
-\defn{EulerNorm}{\vardef{hMat},\vardef{Nvec}}{Computes the Ringel-Tits norm of the dimension
-vector $\var{Nvec}$ from the matrix $\var{hMat}$}
+\defn{ShortestCycleWeight}{\vardef{hMat}, \vardef{node}, \vardef{Cut}, \vardef{maxIters}}
+{computes the weight of the shortest cycle starting from $\var{node}$ in the quiver with height matrix $\var{hMat}$, optionally cut by the arrows in $\var{Cut}$. The optional parameter $\var{maxIters}$ specify after how many iterations should the algorithm stop, in case it does not converge. By default, it is set to $10$. If there exists multiple equally short cycles with different weights, one weight will be chosen arbitrarily.}
+
+\defn{SideWeight}{\vardef{hMat}, \vardef{Wp}, \vardef{Wm}, \vardef{i}}
+{computes the weight associated to the $\var{i}^{\text{th}}$ side of the toric fan, defining the character of the set of zig-zag paths associated to the given side of the toric fan, for the quiver with height matrix $\var{hMat}$ and superpotential $\var{Wp}-\var{Wm}$. The $\var{i}^{\text{th}}$ side is between the $\var{i}$ and $\var{i}+1$ corners, where the ordering of the corners is given by applying successively \fun{DualFan} and \fun{ExternalPoints}.}
+
+\defn{ListPerfectMatchings}{\vardef{Wp},\vardef{Wm}}{produces the list of cuts for the potential $W=W_+-W_-=\var{Wp}-\var{Wm}$; each term in $W_\pm$ must be a sum of monomials in $\var{Phi[i,j,k]}$ with unit coefficient; each perfect matching is represented by a list of triplets $\{i,j,k\}$
+such that $W$ is linear in each $\var{Phi[i,j,k]}$}
+
+\defn{PerfectMatchingWeight}{\vardef{Perf},\vardef{hMat}}{computes the dual of the character of the perfect matching $\var{Perf}$ for the quiver with height matrix $\var{hMat}$, used in \fun{DualFan}.}
+
+\defn{DualFan}{\vardef{hMat},\vardef{Wp},\vardef{Wm}}{computes the dual fan of the quiver with height matrix $\var{hMat}$ and superpotential $\var{Wp}-\var{Wm}$ by computing the characters of the perfect matchings. Since this fan is defined up to an invertible linear transformation, the result is non-canonical.}
+
+\defn{ExternalPoints}{\vardef{Fan}}{gives a list of the corners of the fan $\var{Fan}$, ordered by going clockwise through the corners.}
+
+\defn{InternalSidePoints}{\vardef{points},\vardef{i}}{gives the number of different points lying on the $\var{i}^{\text{th}}$ side of the fan defined by the list $\var{points}$, possibly containing some points with multiplicities. The corners are excluded in the count. The $\var{i}^{\text{th}}$ side is the side lying between the $\var{i}$ and $\var{i}+1$ corners, where the order of the corners is given by applying \fun{ExternalPoints} to $\var{points}$.}
+
+\defn{EulerNorm}{\vardef{hMat},\vardef{Nvec}}{computes the Ringel-Tits norm of the dimension
+vector $\var{Nvec}$ from the quiver with height matrix $\var{hMat}$}
+
+\defn{DimensionVectors}{\vardef{hMat},\vardef{Cut}}{gives a list of the dimension vectors corresponding to each connected component of the quiver with height matrix $\var{hMat}$ whose arrows in $\var{Cut}$ have been removed. The list is non-canonically ordered such that a dimension vector comes after another one in the list if there is an arrow going from the first one to the second one in the uncut quiver.}
 
 \defn{PlotTiling}{\vardef{hMat},\vardef{Nn}, \vardef{v}, \vardef{Range},\vardef{Shor},\vardef{Perf}}{produces a 2D plot of the brane tiling defined by the matrix $\var{hMat}$, by iterating the arrows $\var{Nn}$ times, removing those which belong to the perfect matching $\var{Perf}$. The 
 argument \var{v} should be a list of 
@@ -1333,11 +1370,9 @@ range is set to \var{Range} and arrows are shortened by \var{Shor}. If the argum
 arrow with weight $x_1 h_1 + x_2 h_2 + x_3 h_3$, according to $v=x_1 v_1+x_2 v_2+x_3v_3$. 
 The plot range is set to \var{Range}. If the argument $\var{Perf}$ is omitted, all arrows are included.} 
 
-\defn{PlotToricFan}{\vardef{Fan}}{produces a produces a 2D plot of the polygon with vertices listed in \var{Fan}}
+\defn{PlotToricFan}{\vardef{Fan}}{produces a 2D plot of the polygon with vertices listed in \var{Fan}.}
 
-\defn{ListPerfectMatchings}{\vardef{Wp},\vardef{Wm}}{produces the list of cuts for the potential $W=W_+-W_-=\var{Wp}-\var{Wm}$; each term in $W_\pm$ must be a sum of monomials in $\var{Phi[i,j,k]}$ with unit coefficient; each perfect matching is represented by a list of triplets $\{i,j,k\}$
-such that $W$ is linear in each $\var{Phi[i,j,k]}$}
-
+\defn{DisplayArrowMatrix}{\vardef{hMat}}{produces the matrix of arrows associated to the quiver with height matrix $\var{hMat}$, as usually defined in graph theory.}
 
 \defn{HeightMatrixToDSZ}{\vardef{hMat}}{computes the DSZ matrix associated to the height matrix \var{hMat}}
 
@@ -1346,6 +1381,8 @@ such that $W$ is linear in each $\var{Phi[i,j,k]}$}
 such that the arrow 
 $\Phi_{i_1,j_1}^{k_1}$ has height $h_1$,the arrow 
 $\Phi_{i_2,j_2}^{k_2}$ has height $h_2$  and all monomials in the potential $W=\var{Wp}-\var{Wm}$ have height $h_3$}
+
+\defn{GeneralWeight}{\vardef{hMat},\vardef{weight},\vardef{Nmax}}{tells whether the weight $\var{weight}$ is general or not up to order $\var{Nmax}$, meaning it is not the weight of a path in the quiver with height matrix $\vardef{hMat}$ of length up to $\var{Nmax}$. }
 
 
 \section{Index from deformed Denef equations}

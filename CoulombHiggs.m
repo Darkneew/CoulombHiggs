@@ -2,9 +2,9 @@
 
 (*********************************************************************
  *
- *  CoulombHiggs.m 6.2            
+ *  CoulombHiggs.m 7.0            
  *                                                          
- *  Copyright B. Pioline, April 2021
+ *  Copyright B. Pioline, April 2026
  *
  *  Distributed under the terms of the GNU General Public License 
  *
@@ -123,11 +123,23 @@
  * - Fixed gLR in TreeIndexOpt such that it does not include QuiverMultiplierMat
  * - Fixed FlowTreeFormula, added argument y to FlowTreeFormulaRat
  * - Added TropicalVertex
+ *
+ * Release notes for 7.0:
+ * - Added DisplayArrowMatrix, WeightScalarProduct, GeneralWeight
+ * - Added PerfectMatchingWeight, ShortestCycleWeight, SideWeight
+ * - Added DualFan, InternalSidePoints, ExternalPoints, DimensionVectors
+ * - Added D4FramedNCDTSeries, D4FramingDictionary, D6FramedNCDTSeries
+ * - Fixed ListPerfectMatchings, HeightMatrixFromPotential, AddToCrystal
+ * - Adjusted D4Framing, PlotTiling3D to match expected behaviour
+ * - Angle arguments can now be replaced by a weight argument in NCDTSeriesFromCrystal
+ * - Replaced the angle argument by a weight argument in CrystalWeight and DirectedSign
+ * - Potential terms Wp and Wm are now non-commutative
+ * - Added various safeguards and error messages for quiver routines 
  
  
  
  *********************************************************************)
-Print["CoulombHiggs 6.3 - A package for evaluating quiver invariants"];
+Print["CoulombHiggs 7.0 - A package for evaluating quiver invariants"];
 
 
 BeginPackage["IndexVars`"];
@@ -578,15 +590,21 @@ TrivialStackInvariant::usage="TrivialStackInvariant[Mat_,Cvec_,Nvec_] computes t
 
 NCDTSeriesFromOmS::usage="NCDTSeriesFromOmS[Mat_, Framing_, Nmin_,Nmax_] constructs the gener- ating function of NCDT invariants for the quiver with DSZ matrix Mat and framing vector Framing using the Coulomb branch formula, for dimension vectors from Nmin up to Nmax.";
 
-NCDTSeriesFromOmAtt::usage="NCDTSeriesFromOmAtt[Mat_, Framing_, Nmin_,Nmax_] constructs the gen- erating function of NCDT invariants for the quiver with DSZ matrix Mat and framing vector Framing using the Flow Tree formula, for dimension vectors from Nmin up to Nmax.";
+NCDTSeriesFromOmAtt::usage="NCDTSeriesFromOmAtt[Mat_, Framing_, Nmin_,Nmax_] constructs the generating function of NCDT invariants for the quiver with DSZ matrix Mat and framing vector Framing using the Flow Tree formula, for dimension vectors from Nmin up to Nmax.";
 
-NCDTSeriesFromCrystal::usage="NCDTSeriesFromCrystal[hMat_, fMat_, theta_,phi_, Nn_] constructs the generating function of refined NCDT invariants for the quiver with height matrix hMat and framing data Framing using the refined Quiver Yangian algorithm with C^*_{theta,phi} action, for dimension vectors with height up to Nn.";
+NCDTSeriesFromCrystal::usage="NCDTSeriesFromCrystal[hMat_, fMat_, theta_, phi_, Nn_] or NCDTSeriesFromCrystal[hMat_, fMat_, actionWeight_, Nn_] constructs the generating function of refined NCDT invariants for the quiver with height matrix hMat and framing data Framing using the refined Quiver Yangian algorithm with C^* action determined by the angles theta and phi or directly by the weight actionWeight, for dimension vectors with height up to Nn. Set $theta=0$ or $h_3=0$ for action preserving the superpotential.";
 
-UnrefinedSeriesFromCrystal::usage="UnrefinedSeriesFromCrystal[hMat_,fMat_,Nn_] constructs the generating function of unrefined NCDT invariants (y=1) or molten crystals (y=1) and framing data fMat using the Quiver Yangian algorithm, for dimension vectors with height up to NMax.";
+UnrefinedSeriesFromCrystal::usage="UnrefinedSeriesFromCrystal[hMat_,fMat_,Nn_] constructs the generating function of unrefined NCDT invariants (y=1) or molten crystals (y=-1) and framing data fMat using the Quiver Yangian algorithm, for dimension vectors with height up to NMax.";
+
+D4FramedNCDTSeries::usage="D4FramedNCDTSeries[hMat_,Wp_,Wm_,i_,j_,k_,Nn_] constructs the generating function of refined NCDT invariants with a D4 framing for dimension vectors up to Nn, for the quiver with height matrix hMat and potential Wp-Wm, with the D4 framing associated to the arrow Phi[i,j,k]. If this arrow does not correspond to any non-compact 4-cycle, an error will pop-up.";
+
+D6FramedNCDTSeries::usage="D6FramedNCDTSeries[hMat_,Wp_,Wm_,i_,Nn_,weight_,maxWeightIter_] constructs the generating function of refined NCDT invariants with a D6 framing in node i for dimension vectors up to Nn, for the quiver with height matrix hMat and potential Wp-Wm. If no weight is specificed, a default weight will be used. The algorithm will check wether the weight is valid or not up to order maxWeightIter, which is set to 4 by default.";
 
 D6Framing::usage="D6Framing[hMat_,i_] constructs the framing data fMat for a D6-brane associated to node i";
 
 D4Framing::usage="D4Framing[hMat_,i_,j_,k_] constructs the framing data for a D4-brane associated to arrow Phi_{ij}^k";
+
+D4FramingDictionary::usage="D4FramingDictionary[hMat_,Wp_,Wm_] or D4FramingDictionary[hMat_,Perfs_] constructs the dictionnary from the corners of the toric fan (associated to the quiver with height matrix hMat and with potential Wp-Wm or with perfect matchings Perfs) to the associated D4 framings. Explicitely, it returns a list L such that L[[i]] is a list of all arrows defining D4 framings associated to the i-th toric corner, where the order of the corners is given by applying ExternalPoints and DualFan together.";
 
 FramedDSZ::usage="FramedDSZ[Mat_,Framing_] constructs the DSZ matrix of the framed quiver obtained by attaching arrows from the framing node (labelled 0) to the node i of the original quiver with DSZ matrix Mat.";
 
@@ -594,27 +612,45 @@ FramedFI::usage="FramedFI[Nvec_]constructs a random FI parameter for a framed qu
 
 BondFactor::usage="BondFactor[hMat_,i_,j_,z_] evaluates the bond factor \[CurlyPhi]^{i->j(z), where hMat is a matrix whose (i, j)-entry is the list of heights of the arrows from node i to node j. The heights are in turn linear combinations of parameters h1, h2, h3";
 
-ChargeFunction::usage="[ChargeFunction[hMat_,fMat_,Crys_,i_,z_] constructs the charge function Phi^i_C(z) for the molten crystal C = Crys. The crystal is encoded in a list of {color, height} for each atom.";
+ChargeFunction::usage="[ChargeFunction[hMat_, fMat_, Crys_, i_, z_] constructs the charge function Phi^i_C(z) for the molten crystal C = Crys. The crystal is encoded in a list of {color, height} for each atom.";
 
-AddToCrystal::usage="AddToCrystal[hMat_,fMat_,i_,Crys_]constructs the list of molten crystals obtained by attaching one atom of color i to the molten crystal Crys.";
+AddToCrystal::usage="AddToCrystal[hMat_, fMat_, i_, Crys_] constructs the list of molten crystals obtained by attaching one atom of color i to the molten crystal Crys.";
 
-GrowCrystalList::usage="GrowCrystalList[hMat_,fMat_,CrysList_] constructs the molten crystals obtained from the list Crysli by attaching one additional atom of any color, or none at all";
+GrowCrystalList::usage="GrowCrystalList[hMat_, fMat_, CrysList_] constructs the molten crystals obtained from the list Crysli by attaching one additional atom of any color, or none at all";
 
-CrystalDim::usage="CrystalDim[r_,Crys_] computes the dimension vector for the crystal Crys, assuming that the colors can take values 1 up to r";
+CrystalDim::usage="CrystalDim[r_, Crys_] computes the dimension vector for the crystal Crys, assuming that the colors can take values 1 up to r";
 
-CrystalWeight::usage="CrystalWeight[hMat_,fMat_,theta_,phi_,Crys_] computes the power of y associated to the molten crystal Crys using the C^x_{theta,phi} action. Set $theta=0$ for action preserving the superpotential";
+CrystalWeight::usage="CrystalWeight[hMat_, fMat_, actionWeight_, Crys_] computes the power of y associated to the molten crystal Crys using the C^* action given by the actionWeight. Give zero weight along h3 for action preserving the superpotential";
 
-DirectedSign::usage="DirectedSign[theta_,phi_,lambda_] computes the sign for an atom with weight lambda, with respect to C^x_{x,y} action";
+DirectedSign::usage="DirectedSign[actionWeight_, lambda_] computes the sign for an atom with weight lambda, with respect to the C^* action given by the actionWeight";
 
-EulerNorm::usage="EulerNorm[hMat_,Nvec_] computes the Ringel-Tits norm of the dimension vector Nvec from the matrix of heights hMat";
+WeightScalarProduct::usage="WeightScalarProduct[mu_, lambda_] computes the scalar product between the two weights mu and lambda";
 
-PlotTiling::usage="PlotTiling[hMat_,Nn_,v_,Range_,Shor_,Perf_] produces a 2D plot of the brane tiling defined by the matrix hMat, by iterating the arrows Nn times, removing those which belong to the perfect matching Perf. v is a list of 2D vectors {v1,v2} determining the vector v=x1 v1+x2 v2 associated to an arrow with weight x1 h1 +x2 h2 +x3 h3. The plot range is set to Range, and arrows are shortened by Shor. If the argument Perf is omitted, all arrows are included";
+GeneralWeight::usage="GeneralWeight[hMat_,weight_,Nn_:10] computes wether the given weight is a general weight relative to the given height matrix hMat up to order Nn, meaning the weight cannot be obtained by integer positive integer linear combinations of the height matrix weights with less than Nn terms. If Nn is omitted, it is set to 10 by default.";
 
-PlotTiling3D::usage="PlotTiling3D[hMat_,Nn_,v_,Range_,Perf_] produces a 3D plot of the brane tiling defined by the matrix hMat, by iterating the arrows Nn times, removing those which belong to the perfect matching Perf. v is a list of 3D vectors {v1,v2,v3} determining the vector v=x1 v1+x2 v2+x3 v3 associated to an arrow with weight x1 h1 +x2 h2 +x3 h3. The plot range is set to Range. If the argument Perf is omitted, all arrows are included";
+EulerNorm::usage="EulerNorm[hMat_, Nvec_] computes the Ringel-Tits norm of the dimension vector Nvec from the matrix of heights hMat";
+
+PlotTiling::usage="PlotTiling[hMat_, Nn_, v_, Range_, Shor_, Perf_] produces a 2D plot of the brane tiling defined by the matrix hMat, by iterating the arrows Nn times, removing those which belong to the perfect matching Perf. v is a list of 2D vectors {v1,v2} determining the vector v=x1 v1+x2 v2 associated to an arrow with weight x1 h1 +x2 h2 +x3 h3. The plot range is set to Range, and arrows are shortened by Shor. If the argument Perf is omitted, all arrows are included";
+
+PlotTiling3D::usage="PlotTiling3D[hMat_, Nn_, v_, Range_, Perf_] produces a 3D plot of the brane tiling defined by the matrix hMat, by iterating the arrows Nn times, removing those which belong to the perfect matching Perf. v is a list of 3D vectors {v1,v2,v3} determining the vector v=x1 v1+x2 v2+x3 v3 associated to an arrow with weight x1 h1 +x2 h2 +x3 h3. The plot range is set to Range. If the argument Perf is omitted, all arrows are included";
 
 PlotToricFan::usage="PlotToricFan[Fan_] produces a 2D plot of the polygon with vertices listed in Fan";
 
+ExternalPoints::usage="ExternalPoints[Fan_] lists in order the external points of Fan, corresponding to non-compact divisor. The result can be plotted using PlotToricFan";
+
 ListPerfectMatchings::usage="ListPerfectMatchings[Wp_,Wm_] produces the list of cuts for the potential Wp-Wm; each term in the potential must be a sum of monomials in Phi[i,j,k] with unit coefficient, and each perfect matching is represented by a list of triplets {i,j,k}";
+
+PerfectMatchingWeight::usage="PerfectMatchingWeight[Perf_,hMat_] gives the weight of the perfect matching Perf, given the height matrix hMat";
+
+DimensionVectors::usage="DimensionVectors[hMat_,Cut_] gives an ordered list of the dimension vectors of each connected component of the quiver given by hMat cut by Cut.";
+
+ShortestCycleWeight::usage="ShortestCycleWeight[hMat_,node_,Cut_,maxIters_] computes the weight of the shortest cycle starting from node, for the quiver whose height matrix is hMat, with the arrows from Cut removed. The algorithm stops after maxIters iterations. If Cut is omitted, no arrow is removed. If maxIters is omitted, the algorithm will stop after 10 iterations. If multiple cycles are equally long, the algorithm will choose one arbitrarily";
+
+SideWeight::usage="SideWeight[hMat_,Wp_,Wm_,z_] or SideWeight[hMat_,Perfs_,z_] computes the weight lz associated to the side lying between the z and z+1 corners of the dual toric fan, for a quiver of height matrix hMat and potential Wp-Wm. The order of the dual toric fan corners is given by applying ExternalPoints to DualFan";
+
+InternalSidePoints::usage="InternalSidePoints[unrefinedPoints_, side_] gives the number of internal points of the convex hull of unrefinedPoints along the side lying between the z and z+1 corners, where the order of the corners is given by applying ExternalPoints on the corners. The points are counted without multiplicities.";
+
+DualFan::usage="DualFan[hMat_,Wp_,Wm_] or DualFan[hMat_,Perfs_] produces the fan dual to the quiver with potential, described by its height matrix hMat and its potential Wp-Wm or its complete list of perfect matchings Perfs";
 
 PlethysticExp::usage="PlethysticExp[f_,Nn_] computes the plethystic exponential of f, assuming that it is a function of x[i] and y only";
 
@@ -709,7 +745,6 @@ RandomFI::usage = "RandomFI[gam_] generates a random set of FI parameters betwee
 
 
 UnitStepWarn::usage = "UnitStepWarn[x_] gives 1 for x>0, 0 for x<0, and produces a warning for x=0";
-UnitStepWarn::zero = "UnitStep with vanishing argument, evaluates to 1/2";
 
 AttractorFI::usage = "AttractorFI[Mat_,Nvec_] gives the attractor stability condition";
 
@@ -718,6 +753,8 @@ FIFromZ::usage = "FIFromZ[Nvec_,Zvec_] computes the FI parameters from dimension
 QuiverPlot::usage = "QuiverPlot[Mat_] displays the quiver with DSZ matrix Mat (obsolete, use PlotQuiver instead)";
 
 PlotQuiver::usage = "PlotQuiver[Mat_] displays the quiver with DSZ matrix or height matrix Mat ";
+
+DisplayArrowMatrix::usage = "DisplayArrowMatrix[hMat_] displays the number of arrows in the quiver with height matrix Mat in a matrix format"
 
 HirzebruchR::usage = "HirzebruchR[J_,v_] is the function R_v(J) entering in the Hirzebruch-Riemann-Roch formula ";
 
@@ -771,6 +808,26 @@ HeightMatrixFromPotential::usage="HeightMatrixFromPotential[Wp_,Wm_,{i1_,j1_,k1_
 QuiverMultiplierMat::usage="QuiverMultiplierMat[i_,j_] gives the multiplier to be applied to the (i,j) entry of the DSZ matrix, constructed from $QuiverMultiplier";
  
 
+
+
+(** Error messages **)
+
+Potential::sign="The potential given possesses a minus sign that shouldn't be present or uses commutative multiplication.";
+Potential::duplicate="The potential given possesses duplicate or cancelling terms.";
+Potential::numberOfTerms="The number of terms in the potentials do not match !";
+
+HeightMatrixFromPotential::arrowIndices="The indices of the arrows passed in argument are ill-defined.";
+
+UnitStepWarn::zero = "UnitStep with vanishing argument, evaluates to 1/2";
+
+PerfectMatching::incoherentWeight="There is an incoherence in the perfect matching or the height matrix, resulting in the inability to define a proper weight.";
+
+ShortestCycleWeight::noCycle="There is no cycle in the possibly cut quiver and starting from the given node.";
+
+ToricFan::CornerIndexLimit="The toric fan doesn't have enough sides/corners. The index given is too high.";
+ToricFan::MissingArrow="This arrow does not come from two connected sides of the toric fan, and is not associated to a corner of the toric fan.";
+
+Weight::NotGeneral="The chosen weight is not general enough. There exists some weight orthogonal to it."
 
 Begin["`Private`"]
 
@@ -2695,14 +2752,76 @@ Cvec0-(Plus@@(Cvec0 Nvec0)/Plus@@Nvec0)ConstantArray[1,Length[Nvec0]]];
 
 D6Framing[hMat_,i_]:={Table[If[c==i,{0},{}],{c,Length[hMat]}],Table[{},{c,Length[hMat]}]};
 
-D4Framing[hMat_,i_,j_,k_]:={Table[If[c==i,{0},{}],{c,Length[hMat]}],Table[If[c==j,{hMat[[i,j,k]]},{}],{c,Length[hMat]}]};
+D4Framing[hMat_,i_,j_,k_]:={Table[If[c==i,{(h3-hMat[[i,j,k]])/2},{}],{c,Length[hMat]}],Table[If[c==j,{(h3-hMat[[i,j,k]])/2},{}],{c,Length[hMat]}]};
+
+D4FramingDictionary[hMat_,Wp_,Wm_]:=D4FramingDictionary[hMat,ListPerfectMatchings[Wp,Wm]];
+
+D4FramingDictionary[hMat_,Perfs_]:=With[{dualpoints=DualFan[hMat,Perfs]},
+With[{extpoints=ExternalPoints[dualpoints]},
+With[{perf=Perfs[[FirstPosition[dualpoints,extpoints[[#]]][[1]]]]&},
+Array[z|->Intersection[
+SymmetricDifference[perf[z],If[z==1,perf[Length[extpoints]],perf[z-1]]],
+SymmetricDifference[If[z==Length[extpoints],perf[1],perf[z+1]],perf[z]]],
+Length[extpoints]]]]];
 
 EulerNorm[hMat_,Nvec_]:=Sum[Nvec[[i]]^2,{i,Length[hMat]}]-Sum[Length[hMat[[i,j]]]Nvec[[i]]Nvec[[j]],{i,Length[hMat]},{j,Length[hMat]}];
 
-NCDTSeriesFromCrystal[hMat_,fMat_,theta_,phi_,Nn_]:=Module[{A,A1,Z,CrysLi,Crys,Nvec},
+D4FramedNCDTSeries[hMat_,Wp_,Wm_,i_,j_,k_,Nn_]:=With[{perfs=ListPerfectMatchings[Wp,Wm]},
+With[{dict=D4FramingDictionary[hMat,perfs],nbpoints=Length[ExternalPoints[DualFan[hMat,perfs]]]},
+If[Head[FirstPosition[dict,{i,j,k}]]===Missing,Message[ToricFan::MissingArrow],
+With[{corner=FirstPosition[dict,{i,j,k}][[1]]},
+With[{w1=D[SideWeight[hMat,perfs,corner], #] & /@ {h1, h2},w2=D[SideWeight[hMat,perfs,If[corner==1,nbpoints,corner-1]], #] & /@ {h1, h2}},
+With[{w=w1/Sqrt[Total[w1^2]]+(Sqrt[2]-0.4142) w2/Sqrt[Total[w2^2]]},
+With[{weight=w[[1]] h1+w[[2]] h2},
+NCDTSeriesFromCrystal[hMat,D4Framing[hMat,i,j,k],weight,Nn]]]]]]]];
+
+D6FramedNCDTSeries[hMat_,Wp_,Wm_,i_,Nn_,weight_:-h1+h2/Sqrt[2],maxWeightIter_:4]:=
+(If[!GeneralWeight[hMat,weight,Min[Nn,maxWeightIter]],Message[Weight::NotGeneral]];
+With[{perfs=ListPerfectMatchings[Wp,Wm]},
+With[{dfan=DualFan[hMat,perfs]},
+With[{extpoints=ExternalPoints[dfan]},
+FromCoefficientRules[FilterRules[
+CoefficientRules[(FromCoefficientRules[CoefficientRules[
+Normal[Series@@Join[{PlethysticExp[
+With[{signs=Sign[Total[{D[weight,h1],D[weight,h2]} #]]&
+/@({D[#,h1],D[#,h2]}&
+/@Array[SideWeight[hMat,perfs,#]&,Length[extpoints]]),
+dims=Array[DimensionVectors[hMat,DeleteDuplicates[Join[
+perfs[[FirstPosition[dfan,extpoints[[#]]][[1]]]],
+If[#==Length[extpoints],perfs[[FirstPosition[dfan,extpoints[[1]]][[1]]]],
+perfs[[FirstPosition[dfan,extpoints[[#+1]]][[1]]]]]]]]&,
+Length[extpoints]]},
+With[{nbparts=Total[Array[If[signs[[#]]==-1,Length[dims[[#]]],0]&,Length[extpoints]]]},
+((-y)^3-y (nbparts-2)+(nbparts-1)/y)/(1/y-y) 
+Total[Array[pow|->((-y)^(2 pow)-1) (Times@@Array[x[#]&,Length[hMat]])^pow,Floor[Nn/Length[hMat]]]]+
+Total[Array[z|->If[signs[[z]]==-1,Array[k|->Array[kk|->
+With[{vec=Total[Array[in|->If[in>=kk,dims[[z,in]],0],k-1]]},
+If[Total[vec]==0,0,Total[Array[(
+((-y)^(2 (#-1+vec[[i]]))-1) 
+(Times@@Array[nod|->If[vec[[nod]]==1,x[nod],1],Length[hMat]]) 
+(Times@@Array[nod|->x[nod],Length[hMat]])^(#-1))&,
+Floor[(Nn-Total[vec])/Length[hMat]]+1]]]]+
+With[{vec=Total[Array[in|->If[in<kk||in>=k,dims[[z,in]],0],Length[dims[[z]]]]]},
+If[Total[vec]==0,0,Total[Array[(
+((-y)^(2 (#-1+vec[[i]]))-1) 
+(Times@@Array[nod|->If[vec[[nod]]==1,x[nod],1],Length[hMat]]) 
+(Times@@Array[nod|->x[nod],Length[hMat]])^(#-1))&,
+Floor[(Nn-Total[vec])/Length[hMat]]+1]]]],k-1],
+Length[dims[[z]]]],0],Length[extpoints]],3]]],Nn]},
+Array[{x[#],0,Nn}&,Length[hMat]]]],
+{x[i]}]/.{({x_}->z_)->({x}->(-y)^(-x)z)},
+{x[i]}]/.{x[var_]->Subscript[x,var]})
+NCDTSeriesFromCrystal[hMat,D6Framing[hMat,i],weight,Nn],
+Array[Subscript[x,#]&,Length[hMat]]],
+pows_/;Total[pows]<=Nn],
+Array[Subscript[x,#]&,Length[hMat]]]]]]);
+
+NCDTSeriesFromCrystal[hMat_,fMat_,theta_,phi_,Nn_]:=NCDTSeriesFromCrystal[hMat,fMat,Cos[theta]*(Cos[phi]*h1+Sin[phi]*h2)+Sin[theta]*h3,Nn];
+
+NCDTSeriesFromCrystal[hMat_,fMat_,actionWeight_,Nn_]:=Module[{A,A1,Z,CrysLi,Crys,Nvec},
 Z=1;CrysLi={{}};
 Do[A=GrowCrystalList[hMat,fMat,CrysLi];
-Z+=Sum[Nvec=CrystalDim[Length[hMat],Crys];(-y)^CrystalWeight[hMat,fMat,theta,phi,Crys]
+Z+=Sum[Nvec=CrystalDim[Length[hMat],Crys];(-y)^CrystalWeight[hMat,fMat,actionWeight,Crys]
 Product[Subscript[x,k]^Nvec[[k]],{k,Length[hMat]}],{Crys,A}];
 CrysLi=A,{l,Nn}];
 Plus@@MonomialList[Expand[Z],Table[Subscript[x,k],{k,Length[hMat]}]]];
@@ -2742,8 +2861,8 @@ ChargeFunction[hMat_,fMat_,Crys_,i_,z_]:=Product[z-r,{r,fMat[[2,i]]}]/Product[z-
 
 AddToCrystal[hMat_,fMat_,i_,Crys_]:=Module[{Psi,FListDen,FList,ResidueList},
 Psi=Factor[ChargeFunction[hMat,fMat,Crys,i,z]];
-FListDen=Table[{i,z}/.Solve[f[[1]]==0,z][[1]],{f,Drop[FactorList[Denominator[Psi]],1]}];
-FList=Table[z/.Simplify[Solve[f[[1]]==0,z][[1]]],{f,Select[Drop[FactorList[Psi/.h3->0],1],#[[2]]==-1&]}];
+FListDen=Table[{i,z}/.Solve[f[[1]]==0,z][[1]],{f,Select[FactorList[Denominator[Psi]],D[#[[1]],z]!=0&]}];
+FList=Table[z/.Simplify[Solve[f[[1]]==0,z][[1]]],{f,Select[FactorList[Psi/.h3->0],(#[[2]]==-1&&D[#[[1]],z]!=0)&]}];
 ResidueList=Select[FListDen,MemberQ[FList,Simplify[#[[2]]/.h3->0]]&];
 Complement[ResidueList,Crys]
 ];
@@ -2760,7 +2879,7 @@ GrowCrystalList[hMat_,fMat_,CrysList_]:=Module[{Li,CrysList2},
 CrysList2={};
 Do[PrintTemporary["Adding atoms of type ",i];Do[
 Li=AddToCrystal[hMat,fMat,i,Crys];
-Do[AppendTo[CrysList2,Union[Append[Crys,atom]]],{atom,Li}];
+Do[AppendTo[CrysList2,Union[Append[Crys,atom]]],{atom,Li}]
 ,{Crys,CrysList}];
 ,{i,Length[hMat]}];
 DeleteDuplicates[CrysList2]];
@@ -2777,11 +2896,20 @@ DeleteDuplicates[CrysList2]]; *)
 
 CrystalDim[r_,Crys_]:=Module[{Li},Li=Table[Crys[[j,1]],{j,Length[Crys]}];Table[Count[Li,i],{i,r}]];
 
-CrystalWeight[hMat_,fMat_,theta_,phi_,Crys_]:= -Sum[Sum[If[lambda[[1]]==mu[[1]],DirectedSign[theta,phi,lambda[[2]]-mu[[2]]],0],{mu,Crys}],{lambda,Crys}]+Sum[Sum[Sum[DirectedSign[theta,phi,lambda[[2]]+a-mu[[2]]],{a,hMat[[lambda[[1]],mu[[1]]]]}],{mu,Crys}],{lambda,Crys}]+Sum[Sum[DirectedSign[theta,phi,f-lambda[[2]]],{f,fMat[[1,lambda[[1]]]]}],{lambda,Crys}]+Sum[Sum[DirectedSign[theta,phi,lambda[[2]]-r],{r,fMat[[2,lambda[[1]]]]}],{lambda,Crys}];
+CrystalWeight[hMat_,fMat_,actionWeight_,Crys_]:= -Sum[Sum[If[lambda[[1]]==mu[[1]],DirectedSign[actionWeight,lambda[[2]]-mu[[2]]],0],{mu,Crys}],{lambda,Crys}]+Sum[Sum[Sum[DirectedSign[actionWeight,lambda[[2]]+a-mu[[2]]],{a,hMat[[lambda[[1]],mu[[1]]]]}],{mu,Crys}],{lambda,Crys}]+Sum[Sum[DirectedSign[actionWeight,f-lambda[[2]]],{f,fMat[[1,lambda[[1]]]]}],{lambda,Crys}]+Sum[Sum[DirectedSign[actionWeight,lambda[[2]]-r],{r,fMat[[2,lambda[[1]]]]}],{lambda,Crys}];
 
-DirectedSign[theta_,phi_,lambda_]:=If[Cos[theta]*(Cos[phi]*D[lambda,h1]+Sin[phi]*D[lambda,h2])+Sin[theta]*D[lambda,h3]>0,1,0]-If[Cos[theta]*(Cos[phi]*D[lambda,h1]+Sin[phi]*D[lambda,h2])+Sin[theta]*D[lambda-h3,h3]<0,1,0];
+DirectedSign[actionWeight_,lambda_]:=Sign[WeightScalarProduct[actionWeight,lambda]];
 
+WeightScalarProduct[mu_,lambda_]:=Sum[D[mu, i] D[lambda, i], {i, {h1,h2,h3}}];
 
+GeneralWeight[hMat_,weight_,Nn_:10]:=
+With[{ws=(D[#,h1]h1+D[#,h2]h2)&/@Flatten[hMat]},
+Module[{ret},ret=True;
+Do[If[w=!=0&&WeightScalarProduct[w,weight]==0,
+ret=False;Break[]],
+{w,Expand[Total[ws #]]&/@(Flatten[Array[List,Array[Nn+1&,Length[ws]]],
+Depth[Array[List,Array[Nn+1&,Length[ws]]]]-3]-1)}];
+ret]];
 
 PlotTiling[hMat_,Nn_,v_,Rang_,Shor_,Perf_:{}]:=Module[{ArrowList,ArrowList2,Labels,v1,v2},
 (* produces a list of (color of endpoint, starting point, endpoint, iterating N times excluding arrows in Perf *)
@@ -2804,7 +2932,7 @@ Text[Style[Framed[Labels[[ArrowList[[k,1]]]],RoundingRadius->10],Black,Medium],v
 
 PlotTiling3D[hMat_,Nn_,v_,Rang_,Perf_:{}]:=Module[{ArrowList,ArrowList2,Labels,v1,v2,v3},
 (* produces a list of (color of endpoint, starting point, endpoint, iterating N times excluding arrows in Perf *)
-If[Length[v]==3,{v1,v2,v3}=v,{v1,v2,v3}={{1,0,0},{1,0,0},{1,0,0}}];
+If[Length[v]==3,{v1,v2,v3}=v,{v1,v2,v3}={{0,1,0},{0,0,1},{1,0,0}}];
 ArrowList={{1,0,0}};
 Labels=If[Length[$QuiverVertexLabels]==Length[hMat],$QuiverVertexLabels,Range[Length[hMat]]];
 Do[ArrowList2=ArrowList;
@@ -2822,25 +2950,78 @@ PlotToricFan[Fan_]:=Module[{mx1,mx2,my1,my2},
 mx1=Min[First[Transpose[Fan]]];mx2=Max[First[Transpose[Fan]]];my1=Min[Last[Transpose[Fan]]];my2=Max[Last[Transpose[Fan]]];Graphics[{Thick,Line[Append[Fan,First[Fan]]]},PlotRange->{{mx1-1/3,mx2+1/3},{my1-1/3,my2+1/3}},GridLines->{Range[mx1,mx2],Range[my1,my2]},Frame->True,FrameTicks->None]];
 
 ListPerfectMatchings[Wp_,Wm_]:=Module[{WL,m,LiPhi,LiCuts},
-WL=Union[List@@Wp,List@@Wm];
+WL=Union[List@@Expand[Wp+Wm]];
+If[Length[Cases[WL,_Times]]>0,Message[Potential::sign]];
+If[Length[Cases[WL,_Integer]]>0,Message[Potential::duplicate]];
 m=Length[WL];
-If[OddQ[m],Print["The number of terms in the potentials do not match !"]];
+If[OddQ[m],Message[Potential::numberOfTerms]];
+WL=Times@@#&/@WL;
 LiPhi=Union[Flatten[Table[List@@WL[[i]],{i,m}]]];
 LiCuts=Subsets[LiPhi,{m/2}];
 Select[LiCuts,(WL/.Table[#[[k]]->0,{k,Length[#]}])===ConstantArray[0,m]&]/.Phi[i_,j_,k_]:>{i,j,k}];
 
-HeightMatrixFromPotential[Wp_,Wm_,ijk1_,ijk2_]:=Module[{WL,Li,Mat,EqW,EqV,so,i1,j1,k1,i2,j2,k2},
-If[Length[ijk1]==3,{i1,j1,k1}=ijk1,{i1,j1,k1}={1,2,1}];
-If[Length[ijk2]==3,{i2,j2,k2}=ijk2,{i2,j2,k2}={1,3,1}];
-WL=List@@Expand[Wp+Wm];
-Li=Union[Flatten[Table[List@@WL[[i]],{i,Length[WL]}]]]/.Phi[x__]:>{x};
-Mat=Table[Count[Li,{i,j,k_}],{i,Max[Li]},{j,Max[Li]}];
-EqW=Table[Plus@@List@@WL[[i]]==h3,{i,Length[WL]}];
-(* vertex constraint *)
-EqV=Table[Sum[Sum[Phi[i,j,k],{k,Mat[[i,j]]}]-Sum[Phi[j,i,k],{k,Mat[[j,i]]}],{j,Length[Mat]}]==0,{i,Length[Mat]}];
-so=Solve[Flatten[{EqW,EqV,Phi[i1,j1,k1]==h1,Phi[i2,j2,k2]==h2}]][[1]];
-Table[Table[Phi[i,j,k],{k,Mat[[i,j]]}],{i,Length[Mat]},{j,Length[Mat]}]/.so]
+PerfectMatchingWeight[Perf_,hMat_]:=Module[{exprs,weight1,weight2},exprs={};
+With[{perfWeight=Join[Array[Symbol["q"<>ToString[#]]&,Length[hMat]],{weight1,weight2,1}]},
+For[i=1,i<=Length[hMat],i++,For[j=1,j<=Length[hMat[[i]]],j++,For[k=1,k<=Length[hMat[[i,j]]],k++,
+If[ContainsAny[Perf,{{i,j,k}}],
+AppendTo[exprs,Total[perfWeight Join[Array[If[#==j,1,0]&,Length[hMat]]+Array[If[#==i,-1,0]&,Length[hMat]],D[hMat[[i,j,k]],#]&/@{h1,h2,h3}]]==1],
+AppendTo[exprs,Total[perfWeight Join[Array[If[#==j,1,0]&,Length[hMat]]+Array[If[#==i,-1,0]&,Length[hMat]],D[hMat[[i,j,k]],#]&/@{h1,h2,h3}]]==0]]]]];
+With[{sol=Solve[And@@exprs,Join[Array[Symbol["q"<>ToString[#]]&,Length[hMat]-1],{weight1,weight2}]]},
+If[Length[sol]!=1,Message[PerfectMatching::incoherentWeight],(weight1 h1+weight2 h2+h3)/.sol[[1]]]]]];
 
+DualFan[hMat_,Wp_,Wm_]:=DualFan[hMat,ListPerfectMatchings[Wp,Wm]];
+
+DualFan[hMat_,Perfs_]:=Module[{rpoints},
+rpoints={D[#,h1],D[#,h2]}&/@(PerfectMatchingWeight[#,hMat]&/@Perfs);
+rpoints=With[{shift={MinimalBy[rpoints[[;;,1]],Abs][[1]],MinimalBy[rpoints[[;;,2]],Abs][[1]]}},(#-shift)&/@rpoints];
+LCM@@Denominator/@Flatten[rpoints]*rpoints];
+
+ExternalPoints[Fan_]:=With[{mesh=ConvexHullMesh[Fan]},MeshCoordinates[mesh][[MeshCells[mesh,2][[1,1]]]]];
+
+DimensionVectors[hMat_,Cut_]:=With[{nodes=Range[Length[hMat]]},
+Module[{dims,queue,nextnodes,node},dims={};nextnodes={1};
+While[Length[Flatten[dims]]<Length[nodes],
+queue=CreateDataStructure["Queue"];
+AppendTo[dims,{nextnodes[[1]]}];
+queue["Push",nextnodes[[1]]];
+nextnodes={};
+While[!queue["EmptyQ"],node=queue["Pop"];
+Do[If[ContainsNone[dims[[-1]],{i}],
+If[Length[hMat[[node,i]]]>0,
+If[Length[hMat[[node,i]]]==Length[Cases[Cut,{node,i,x_}]],
+AppendTo[nextnodes,i],
+AppendTo[dims[[-1]],i];
+queue["Push",i]]]],{i,Length[hMat]}]];
+nextnodes=Complement[nextnodes,Flatten[dims]]];
+(li|->Array[If[ContainsAny[li,{#}],1,0]&,Length[hMat]])/@dims]];
+
+ShortestCycleWeight[hMat_,node_,Cut_:{},maxIters_:10]:=Module[{queue,weight,w,n,count},
+weight=0;count=0;queue=CreateDataStructure["Queue"];queue["Push",{0,node}];
+While[(!queue["EmptyQ"])&&weight===0,{w,n}=queue["Pop"];
+For[j=1,j<=Length[hMat[[n]]],j++,For[k=1,k<=Length[hMat[[n,j]]],k++,
+If[ContainsNone[Cut,{{n,j,k}}],If[j==node,weight=w+hMat[[n,j,k]],queue["Push",{w+hMat[[n,j,k]],j}]]]]];
+count++;
+If[count>=maxIters,queue["DropAll"]]];
+If[weight===0,Message[ShortestCycleWeight::noCycle],weight]];
+
+SideWeight[hMat_,Wp_,Wm_,z_]:=SideWeight[hMat,ListPerfectMatchings[Wp,Wm],z];
+
+SideWeight[hMat_,Perfs_,z_]:=With[{dualpoints=DualFan[hMat,Perfs]},
+With[{extpoints=ExternalPoints[dualpoints]},
+If[z>Length[extpoints],Message[ToricFan::CornerIndexLimit]];
+With[{cut=DeleteDuplicates[Join[Perfs[[FirstPosition[dualpoints,extpoints[[z]]][[1]]]],
+If[z==Length[extpoints],Perfs[[FirstPosition[dualpoints,extpoints[[1]]][[1]]]],
+Perfs[[FirstPosition[dualpoints,extpoints[[z+1]]][[1]]]]]]]},
+ShortestCycleWeight[hMat,1,cut]]]];
+
+InternalSidePoints[unrefinedPoints_,side_]:=With[{points=ExternalPoints[unrefinedPoints],upoints=DeleteDuplicates[unrefinedPoints]},
+If[side>Length[points],Message[ToricFan::CornerIndexLimit],
+With[{s2=If[side==Length[points],1,side+1]},
+Module[{count},count=0;
+If[(points[[s2]]-points[[side]])[[1]]==0,If[(#-points[[side]])[[1]]==0,count++],
+If[(points[[s2]]-points[[side]])[[2]]==0,If[(#-points[[side]])[[2]]==0,count++],
+If[(#-points[[side]])[[1]]/(points[[s2]]-points[[side]])[[1]]==(#-points[[side]])[[2]]/(points[[s2]]-points[[side]])[[2]],count++]]]&
+/@upoints;count-2]]]];
 
 
 
@@ -3214,7 +3395,9 @@ If[Depth[hMat[[1,1]]]>1,Gr=Flatten[Table[ConstantArray[i->j,Length[hMat[[i,j]]]]
 Gr=Flatten[Table[ConstantArray[i->j,Max[hMat[[i,j]],0]],{i,Length[hMat]},{j,Length[hMat]}]]];
 V=If[Length[$QuiverVertexLabels]==Length[hMat],$QuiverVertexLabels,Range[Length[hMat]]];
 Graph[Gr,DirectedEdges->True,VertexLabels->Table[i->V[[i]],{i,Length[hMat]}]]];       
-      
+
+DisplayArrowMatrix[hMat_]:=MatrixForm[Map[Length, hMat, {2}]];
+
 (* list loops and associated R-charges *)
 ListLoopRCharges[Mat_,RMat_]:=Module[{perm},
 perm=FindCycle[AdjacencyGraph[Table[If[Mat[[i,j]]>0,1,0],{i,Length[Mat]},{j,Length[Mat]}]],Infinity,All];
@@ -3268,17 +3451,20 @@ Mat2[[Li[[i,2]],Li[[i,1]]]]:=0;],{i,Length[Li]}];Mat2];
 
 HeightMatrixToDSZ[hMat_]:=Table[Length[hMat[[i,j]]]-Length[hMat[[j,i]]],{i,Length[hMat]},{j,Length[hMat]}];
 
-HeightMatrixFromPotential[Wp_,Wm_,ijk1_,ijk2_]:=Module[{WL,Li,Mat,EqW,EqV,so,i1,j1,k1,i2,j2,k2},
-If[Length[ijk1]==3,{i1,j1,k1}=ijk1,{i1,j1,k1}={1,2,1}];
-If[Length[ijk2]==3,{i2,j2,k2}=ijk2,{i2,j2,k2}={1,3,1}];
-WL=List@@Expand[Wp+Wm];
+HeightMatrixFromPotential[Wp_,Wm_,ijk1_,ijk2_]:=Module[{WL,Li,Mat,EqW,EqV,so,i1,j1,k1,i2,j2,k2,NumberVertices},
+If[Length[ijk1]==3,{i1,j1,k1}=ijk1,If[Length[ijk1]==2,{i1,j1}=ijk1;k1=1,Message[HeightMatrixFromPotential::arrowIndices]]];
+If[Length[ijk2]==3,{i2,j2,k2}=ijk2,If[Length[ijk2]==2,{i2,j2}=ijk2;k2=1,Message[HeightMatrixFromPotential::arrowIndices]]];
+WL=List@@Expand[Wp+Wm]; 
+If[Length[Cases[WL,_Times]]>0,Message[Potential::sign]];
+If[Length[Cases[WL,_Integer]]>0,Message[Potential::duplicate]];
 Li=Union[Flatten[Table[List@@WL[[i]],{i,Length[WL]}]]]/.Phi[x__]:>{x};
-Mat=Table[Count[Li,{i,j,k_}],{i,Max[Li]},{j,Max[Li]}];
+NumberVertices=Max[Li[[All,1;;2]]];
+Mat=Table[Count[Li,{i,j,k_}],{i,NumberVertices},{j,NumberVertices}];
 EqW=Table[Plus@@List@@WL[[i]]==h3,{i,Length[WL]}];
 (* vertex constraint *)
-EqV=Table[Sum[Sum[Phi[i,j,k],{k,Mat[[i,j]]}]-Sum[Phi[j,i,k],{k,Mat[[j,i]]}],{j,Length[Mat]}]==0,{i,Length[Mat]}];
+EqV=Table[Sum[Sum[Phi[i,j,k],{k,Mat[[i,j]]}]-Sum[Phi[j,i,k],{k,Mat[[j,i]]}],{j,NumberVertices}]==0,{i,NumberVertices}];
 so=Solve[Flatten[{EqW,EqV,Phi[i1,j1,k1]==h1,Phi[i2,j2,k2]==h2}]][[1]];
-Table[Table[Phi[i,j,k],{k,Mat[[i,j]]}],{i,Length[Mat]},{j,Length[Mat]}]/.so]
+Table[Table[Phi[i,j,k],{k,Mat[[i,j]]}],{i,NumberVertices},{j,NumberVertices}]/.so]
 
 QuiverMultiplierMat[i_,j_]:=If[Depth[$QuiverMultiplier]==1,$QuiverMultiplier,$QuiverMultiplier[[i,j]]];
 
@@ -3352,40 +3538,40 @@ n=Length[avec]; P=1/((1/y Product[(1-y x[i]),{i,n}]-y  Product[(1-x[i]/y),{i,n}]
 
 ListKnownBraneTilings:=Do[Print[i,":",BraneTilingsData[[i,1]]];,{i,Length[BraneTilingsData]}];
 BraneTilingsData={
-{"C^3",{{0,0},{0,1},{1,0}},{{{h1+h3/3,h2+h3/3,-h1-h2+h3/3}}},Phi[1,1,1] Phi[1,1,2] Phi[1,1,3],Phi[1,1,1] Phi[1,1,2] Phi[1,1,3],{-(1/2),Sqrt[3]/2},{1,0}},
-{"Conifold=Y10",{{0,0},{0,1},{1,1},{1,0},{0,0},{1,1}},{{{},{h1+h3/4,-h1+h3/4}},{{h2+h3/4,-h2+h3/4},{}}},Phi[1,2,1] Phi[1,2,2] Phi[2,1,1] Phi[2,1,2],Phi[1,2,1] Phi[1,2,2] Phi[2,1,1] Phi[2,1,2],{-(1/2),Sqrt[3]/2},{1,0}},
-{"C^2xC/2",{{0,1},{0,0},{1,0},{2,0},{0,1},{1,0}},{{{h1},{h2,-h1-h2+h3}},{{h2,-h1-h2+h3},{h1}}},Phi[1,1,1] Phi[1,2,2] Phi[2,1,1]+Phi[1,1,1] Phi[1,2,1] Phi[2,1,2],Phi[1,2,2] Phi[2,1,1] Phi[2,2,1]+Phi[1,2,1] Phi[2,1,2] Phi[2,2,1],{-(1/2),Sqrt[3]/2},{1,0}},
-{"C^2xC/3",{{0,1},{0,0},{1,0},{2,0},{3,0},{0,1},{1,0},{2,0},{0,1}},{{{h1},{h2},{-h1-h2+h3}},{{-h1-h2+h3},{h1},{h2}},{{h2},{-h1-h2+h3},{h1}}},Phi[1,1,1] Phi[1,2,1] Phi[2,1,1]+Phi[2,2,1] Phi[2,3,1] Phi[3,2,1]+Phi[1,3,1] Phi[3,1,1] Phi[3,3,1],Phi[1,2,1] Phi[2,1,1] Phi[2,2,1]+Phi[1,1,1] Phi[1,3,1] Phi[3,1,1]+Phi[2,3,1] Phi[3,2,1] Phi[3,3,1],{-(1/2),Sqrt[3]/2},{1,0}},
-{"C^3/2x2",{{0,0},{2,0},{0,2},{0,1},{1,0},{1,1},{0,1}},{{{},{h1},{h2},{-h1-h2+h3}},{{h1},{},{-h1-h2+h3},{h2}},{{h2},{-h1-h2+h3},{},{h1}},{{-h1-h2+h3},{h2},{h1},{}}},Phi[1,3,1] Phi[2,1,1] Phi[3,2,1]+Phi[1,2,1] Phi[2,4,1] Phi[4,1,1]+Phi[2,3,1] Phi[3,4,1] Phi[4,2,1]+Phi[1,4,1] Phi[3,1,1] Phi[4,3,1],Phi[1,2,1] Phi[2,3,1] Phi[3,1,1]+Phi[1,3,1] Phi[3,4,1] Phi[4,1,1]+Phi[1,4,1] Phi[2,1,1] Phi[4,2,1]+Phi[2,4,1] Phi[3,2,1] Phi[4,3,1],{-(1/2),Sqrt[3]/2},{1,0}},
-{"SPP=L121",{{0,0},{2,0},{1,1},{0,1},{0,0},{1,1},{1,0}},{{{-h1-h2+h3},{h1},{h2}},{{h2},{},{-h2+h3/2}},{{h1},{-h1+h3/2},{}}},Phi[1,1,1] Phi[1,3,1] Phi[3,1,1]+Phi[1,2,1] Phi[2,1,1] Phi[2,3,1] Phi[3,2,1],Phi[1,1,1] Phi[1,2,1] Phi[2,1,1]+Phi[1,3,1] Phi[2,3,1] Phi[3,1,1] Phi[3,2,1],{0,1},{1,0}},
-{"L131",{{0,0},{1,-1},{1,0},{1,1},{1,2},{0,1}},{{{h2},{h1},{},{-h1-h2+h3}},{{-h1-h2+h3},{h2},{h1},{}},{{},{-h1-h2+h3},{},{h1+h2-h3/2}},{{h1},{},{-h1+h3/2},{}}},Phi[1,1,1] Phi[1,2,1] Phi[2,1,1]+Phi[2,2,1] Phi[2,3,1] Phi[3,2,1]+Phi[1,4,1] Phi[3,4,1] Phi[4,1,1] Phi[4,3,1],Phi[1,2,1] Phi[2,1,1] Phi[2,2,1]+Phi[1,1,1] Phi[1,4,1] Phi[4,1,1]+Phi[2,3,1] Phi[3,2,1] Phi[3,4,1] Phi[4,3,1],{-(1/2),Sqrt[3]/2},{1,0}},
-{"P2=C^3/(1,1,1)",{{0,0},{1,0},{0,1},{-1,-1},{1,0},{0,1},{0,0},{-1,-1}},{{{},{h1,h2,-h1-h2+h3},{}},{{},{},{h1,h2,-h1-h2+h3}},{{h1,h2,-h1-h2+h3},{},{}}},Phi[1,2,2] Phi[2,3,3] Phi[3,1,1]+Phi[1,2,3] Phi[2,3,1] Phi[3,1,2]+Phi[1,2,1] Phi[2,3,2] Phi[3,1,3],Phi[1,2,3] Phi[2,3,2] Phi[3,1,1]+Phi[1,2,1] Phi[2,3,3] Phi[3,1,2]+Phi[1,2,2] Phi[2,3,1] Phi[3,1,3],{-(1/2),Sqrt[3]/2},{1,0}},
-{"F0.1=P1xP1",{{1,0},{0,1},{-1,0},{0,-1},{1,0},{-1,0},{0,1},{0,-1}},{{{},{h1,-h1+(2 h3)/3},{h2,-h2+(2 h3)/3},{}},{{},{},{},{h2,-h2+(2 h3)/3}},{{},{},{},{h1,-h1+(2 h3)/3}},{{h1+h2-h3/3,h1-h2+h3/3,-h1+h2+h3/3,-h1-h2+h3},{},{},{}}},Phi[1,2,2] Phi[2,4,2] Phi[4,1,1]+Phi[1,3,1] Phi[3,4,2] Phi[4,1,2]+Phi[1,3,2] Phi[3,4,1] Phi[4,1,3]+Phi[1,2,1] Phi[2,4,1] Phi[4,1,4],Phi[1,3,2] Phi[3,4,2] Phi[4,1,1]+Phi[1,2,2] Phi[2,4,1] Phi[4,1,2]+Phi[1,2,1] Phi[2,4,2] Phi[4,1,3]+Phi[1,3,1] Phi[3,4,1] Phi[4,1,4],{-(1/2),Sqrt[3]/2},{1,0}},
-{"F0.2=P1xP1",{{1,0},{0,1},{-1,0},{0,-1},{1,0},{-1,0},{0,1},{0,-1}},{{{},{h1,-h1+h3/2},{},{}},{{},{},{h2,-h2+h3/2},{}},{{},{},{},{h1,-h1+h3/2}},{{h2,-h2+h3/2},{},{},{}}},Phi[1,2,1] Phi[2,3,2] Phi[3,4,2] Phi[4,1,1]+Phi[1,2,1] Phi[2,3,1] Phi[3,4,2] Phi[4,1,2],Phi[1,2,2] Phi[2,3,2] Phi[3,4,1] Phi[4,1,1]+Phi[1,2,2] Phi[2,3,1] Phi[3,4,1] Phi[4,1,2],{-(1/2),Sqrt[3]/2},{1,0}},
-{"F1=dP1=Y21=L312",{{1,0},{0,1},{-1,1},{0,-1},{1,0}},{{{},{h1},{-((2 h1)/3)+h3/2},{}},{{},{},{h2,h1/3-h2+h3/2},{}},{{},{},{},{h1/3+h2,-((4 h1)/3)+h3/2,(2 h1)/3-h2+h3/2}},{{h2,h1/3-h2+h3/2},{-((2 h1)/3)+h3/2},{},{}}},Phi[1,2,1] Phi[2,3,2] Phi[3,4,2] Phi[4,1,1]+Phi[1,3,1] Phi[3,4,1] Phi[4,1,2]+Phi[2,3,1] Phi[3,4,3] Phi[4,2,1],Phi[1,3,1] Phi[3,4,3] Phi[4,1,1]+Phi[1,2,1] Phi[2,3,1] Phi[3,4,2] Phi[4,1,2]+Phi[2,3,2] Phi[3,4,1] Phi[4,2,1],{0,1},{1,0.2}},
-{"F2=C^3/(1,1,2)",{{1,0},{0,1},{-1,2},{0,-1},{1,0}},{{{},{h1,h2},{-h1-h2+h3},{}},{{},{},{h1,h2},{-h1-h2+h3}},{{-h1-h2+h3},{},{},{h1,h2}},{{h1,h2},{-h1-h2+h3},{},{}}},Phi[1,2,1] Phi[2,3,2] Phi[3,1,1]+Phi[1,2,2] Phi[2,4,1] Phi[4,1,1]+Phi[1,3,1] Phi[3,4,1] Phi[4,1,2]+Phi[2,3,1] Phi[3,4,2] Phi[4,2,1],Phi[1,2,2] Phi[2,3,1] Phi[3,1,1]+Phi[1,3,1] Phi[3,4,2] Phi[4,1,1]+Phi[1,2,1] Phi[2,4,1] Phi[4,1,2]+Phi[2,3,2] Phi[3,4,1] Phi[4,2,1],{-(1/2),Sqrt[3]/2},{1,0}},
-{"dP2.1",{{1,0},{0,1},{-1,0},{-1,-1},{0,-1}},{{{},{h1},{h2},{},{}},{{},{},{},{2 h1+3 h2-h3,-((8 h1)/3)-(11 h2)/3+2 h3},{}},{{},{},{},{3 h1+2 h2-h3,-((11 h1)/3)-(8 h2)/3+2 h3},{}},{{-3 h1-3 h2+2 h3},{},{},{},{-(h1/3)-(7 h2)/3+h3,-((7 h1)/3)-h2/3+h3,(13 h1)/3+(13 h2)/3-2 h3}},{{4 h1+4 h2-2 h3},{-((5 h1)/3)-(2 h2)/3+h3},{-((2 h1)/3)-(5 h2)/3+h3},{},{}}},Phi[1,3,1] Phi[3,4,1] Phi[4,1,1]+Phi[1,2,1] Phi[2,4,2] Phi[4,5,2] Phi[5,1,1]+Phi[2,4,1] Phi[4,5,1] Phi[5,2,1]+Phi[3,4,2] Phi[4,5,3] Phi[5,3,1],Phi[1,2,1] Phi[2,4,1] Phi[4,1,1]+Phi[1,3,1] Phi[3,4,2] Phi[4,5,1] Phi[5,1,1]+Phi[2,4,2] Phi[4,5,3] Phi[5,2,1]+Phi[3,4,1] Phi[4,5,2] Phi[5,3,1],{-(1/3),1},{1,0}},
-{"dP2.2",{{1,0},{0,1},{-1,0},{-1,-1},{0,-1}},{{{},{h1,h2},{},{},{}},{{},{},{-2 h1-3 h2+(3 h3)/2,h1+2 h2-h3/2},{(4 h1)/5+(2 h2)/5+h3/10},{}},{{},{},{},{-((6 h1)/5)-(3 h2)/5+(3 h3)/5},{h1/5-(2 h2)/5+(2 h3)/5}},{{-((4 h1)/5)-(7 h2)/5+(9 h3)/10},{},{},{},{(2 h1)/5+(6 h2)/5-h3/5}},{{(9 h1)/5+(12 h2)/5-(9 h3)/10},{-((6 h1)/5)-(8 h2)/5+(11 h3)/10},{},{},{}}},Phi[1,2,1] Phi[2,3,2] Phi[3,4,1] Phi[4,1,1]+Phi[1,2,2] Phi[2,3,1] Phi[3,5,1] Phi[5,1,1]+Phi[2,4,1] Phi[4,5,1] Phi[5,2,1],Phi[1,2,2] Phi[2,4,1] Phi[4,1,1]+Phi[1,2,1] Phi[2,3,1] Phi[3,4,1] Phi[4,5,1] Phi[5,1,1]+Phi[2,3,2] Phi[3,5,1] Phi[5,2,1],{0,1},{3/2,-(1/3)}},
-{"dP3.1",{{1,0},{1,1},{0,1},{-1,0},{-1,-1},{0,-1}},{{{},{h1},{h2},{},{},{}},{{},{},{-h1-3 h2+(4 h3)/3},{h1+2 h2-h3/2},{},{}},{{},{},{},{-2 h1-3 h2+(3 h3)/2},{h1+h2-h3/6},{}},{{},{},{},{},{-h1+h3/3},{-h2+(2 h3)/3}},{{-h1-2 h2+(7 h3)/6},{},{},{},{},{h1+3 h2-h3}},{{2 h1+3 h2-(7 h3)/6},{-h1-h2+(5 h3)/6},{},{},{},{}}},Phi[1,3,1] Phi[3,5,1] Phi[5,1,1]+Phi[1,2,1] Phi[2,3,1] Phi[3,4,1] Phi[4,5,1] Phi[5,6,1] Phi[6,1,1]+Phi[2,4,1] Phi[4,6,1] Phi[6,2,1],Phi[1,2,1] Phi[2,4,1] Phi[4,5,1] Phi[5,1,1]+Phi[1,3,1] Phi[3,4,1] Phi[4,6,1] Phi[6,1,1]+Phi[2,3,1] Phi[3,5,1] Phi[5,6,1] Phi[6,2,1],{-(1/2),Sqrt[3]/2},{1,0}},
-{"dP3.2",{{1,0},{1,1},{0,1},{-1,0},{-1,-1},{0,-1}},{{{},{h1,-h1+h3/2},{h2},{},{},{}},{{},{},{-2 h2+(7 h3)/8},{h1/2+h2/2+h3/16},{-(h1/2)+h2/2+(5 h3)/16},{}},{{},{},{},{-(h1/2)-h2/2+(9 h3)/16},{h1/2-h2/2+(5 h3)/16},{}},{{h1/2-h2/2+(7 h3)/16},{},{},{},{},{-(h1/2)+h2/2+(3 h3)/16}},{{-(h1/2)-h2/2+(11 h3)/16},{},{},{},{},{h1/2+h2/2-h3/16}},{{2 h2-(5 h3)/8},{-h2+(3 h3)/4},{},{},{},{}}},Phi[1,2,2] Phi[2,4,1] Phi[4,1,1]+Phi[1,3,1] Phi[3,5,1] Phi[5,1,1]+Phi[1,2,1] Phi[2,3,1] Phi[3,4,1] Phi[4,6,1] Phi[6,1,1]+Phi[2,5,1] Phi[5,6,1] Phi[6,2,1],Phi[1,3,1] Phi[3,4,1] Phi[4,1,1]+Phi[1,2,1] Phi[2,5,1] Phi[5,1,1]+Phi[1,2,2] Phi[2,3,1] Phi[3,5,1] Phi[5,6,1] Phi[6,1,1]+Phi[2,4,1] Phi[4,6,1] Phi[6,2,1],{0,3/2},{1,0}},
-{"dP3.3",{{1,0},{1,1},{0,1},{-1,0},{-1,-1},{0,-1}},{{{},{h1,-h1+(2 h3)/5},{h2},{-h2+(4 h3)/5},{},{}},{{},{},{-h2+(3 h3)/5},{h2-h3/5},{},{}},{{},{},{},{},{-(h1/2)+(2 h3)/5},{h1/2+h3/5}},{{},{},{},{},{h1/2+h3/5},{-(h1/2)+(2 h3)/5}},{{h1/2-h2+(3 h3)/5,-(h1/2)+h2},{},{},{},{},{}},{{-(h1/2)-h2+(4 h3)/5,h1/2+h2-h3/5},{},{},{},{},{}}},Phi[1,3,1] Phi[3,5,1] Phi[5,1,1]+Phi[1,2,2] Phi[2,4,1] Phi[4,5,1] Phi[5,1,1]+Phi[1,2,2] Phi[2,3,1] Phi[3,6,1] Phi[6,1,2]+Phi[1,4,1] Phi[4,6,1] Phi[6,1,2],Phi[1,2,1] Phi[2,3,1] Phi[3,5,1] Phi[5,1,2]+Phi[1,4,1] Phi[4,5,1] Phi[5,1,2]+Phi[1,3,1] Phi[3,6,1] Phi[6,1,1]+Phi[1,2,1] Phi[2,4,1] Phi[4,6,1] Phi[6,1,1],{0,2},{1,0}},
-{"dP3.4",{{1,0},{1,1},{0,1},{-1,0},{-1,-1},{0,-1}},{{{},{h1,h2,-h1-h2+h3},{-h1+(2 h3)/3,-h2+(2 h3)/3,h1+h2-h3/3},{},{},{}},{{},{},{},{-(h1/2)-h2/2+(2 h3)/3},{h2/2+h3/6},{h1/2+h3/6}},{{},{},{},{h1/2+h2/2},{-(h2/2)+h3/2},{-(h1/2)+h3/2}},{{-(h1/2)+h2/2+h3/3,h1/2-h2/2+h3/3},{},{},{},{},{}},{{h1+h2/2-h3/6,-h1-h2/2+(5 h3)/6},{},{},{},{},{}},{{-(h1/2)-h2+(5 h3)/6,h1/2+h2-h3/6},{},{},{},{},{}}},Phi[1,2,1] Phi[2,4,1] Phi[4,1,1]+Phi[1,3,1] Phi[3,4,1] Phi[4,1,2]+Phi[1,2,3] Phi[2,5,1] Phi[5,1,1]+Phi[1,3,3] Phi[3,5,1] Phi[5,1,2]+Phi[1,2,2] Phi[2,6,1] Phi[6,1,1]+Phi[1,3,2] Phi[3,6,1] Phi[6,1,2],Phi[1,3,2] Phi[3,4,1] Phi[4,1,1]+Phi[1,2,2] Phi[2,4,1] Phi[4,1,2]+Phi[1,3,1] Phi[3,5,1] Phi[5,1,1]+Phi[1,2,1] Phi[2,5,1] Phi[5,1,2]+Phi[1,3,3] Phi[3,6,1] Phi[6,1,1]+Phi[1,2,3] Phi[2,6,1] Phi[6,1,2],{-(1/2),Sqrt[3]/2},{1,0}},
-{"PdP2",{{1,0},{-1,1},{-1,0},{-1,-1},{0,-1}},{{{},{h1,h2},{-h1-h2+h3},{},{}},{{},{},{h1,h2},{-((3 h1)/5)-h2+(4 h3)/5},{}},{{-h1-h2+h3},{},{},{(2 h1)/5+h2-h3/5},{(3 h1)/5+h3/5}},{{(3 h1)/5+h3/5},{},{},{},{-((4 h1)/5)+(2 h3)/5}},{{(2 h1)/5+h2-h3/5},{-((3 h1)/5)-h2+(4 h3)/5},{},{},{}}},Phi[1,2,2] Phi[2,3,1] Phi[3,1,1]+Phi[1,3,1] Phi[3,4,1] Phi[4,1,1]+Phi[1,3,1] Phi[3,5,1] Phi[5,1,1]+Phi[2,3,1] Phi[3,4,1] Phi[4,5,1] Phi[5,2,1],Phi[1,2,1] Phi[2,3,2] Phi[3,1,1]+Phi[1,2,2] Phi[2,4,1] Phi[4,1,1]+Phi[1,2,1] Phi[2,4,1] Phi[4,5,1] Phi[5,1,1]+Phi[2,3,2] Phi[3,5,1] Phi[5,2,1],{-(1/2),Sqrt[3]/2},{1,0}},
-{"PdP3a=C^3/(1,2,3)",{{-1,0},{0,-1},{2,3}},{{{},{h1},{h2},{-h1-h2+h3},{},{}},{{},{},{h1},{h2},{-h1-h2+h3},{}},{{},{},{},{h1},{h2},{-h1-h2+h3}},{{-h1-h2+h3},{},{},{},{h1},{h2}},{{h2},{-h1-h2+h3},{},{},{},{h1}},{{h1},{h2},{-h1-h2+h3},{},{},{}}},Phi[1,2,1] Phi[2,4,1] Phi[4,1,1]+Phi[1,4,1] Phi[4,5,1] Phi[5,1,1]+Phi[2,3,1] Phi[3,5,1] Phi[5,2,1]+Phi[1,3,1] Phi[3,6,1] Phi[6,1,1]+Phi[2,5,1] Phi[5,6,1] Phi[6,2,1]+Phi[3,4,1] Phi[4,6,1] Phi[6,3,1],Phi[1,3,1] Phi[3,4,1] Phi[4,1,1]+Phi[1,2,1] Phi[2,5,1] Phi[5,1,1]+Phi[2,4,1] Phi[4,5,1] Phi[5,2,1]+Phi[1,4,1] Phi[4,6,1] Phi[6,1,1]+Phi[2,3,1] Phi[3,6,1] Phi[6,2,1]+Phi[3,5,1] Phi[5,6,1] Phi[6,3,1],{-(1/2),Sqrt[3]/2},{1,0}},
-{"PdP3b",{{1,0},{0,1},{-1,1},{-1,0},{-1,-1},{0,-1}},{{{},{h1},{h2},{-h1-h2+h3},{},{}},{{h1},{},{},{},{h1/3+h2},{-((4 h1)/3)-h2+h3}},{{},{-h1-h2+h3},{},{(5 h1)/3+2 h2-h3},{},{}},{{},{h2},{},{},{},{(2 h1)/3}},{{-((4 h1)/3)-h2+h3},{},{(2 h1)/3},{},{},{}},{{h1/3+h2},{},{},{},{-h1-2 h2+h3},{}}},Phi[1,4,1] Phi[2,1,1] Phi[4,2,1]+Phi[2,5,1] Phi[3,2,1] Phi[5,3,1]+Phi[1,2,1] Phi[2,6,1] Phi[6,1,1]+Phi[1,3,1] Phi[3,4,1] Phi[4,6,1] Phi[5,1,1] Phi[6,5,1],Phi[1,3,1] Phi[2,1,1] Phi[3,2,1]+Phi[1,2,1] Phi[2,5,1] Phi[5,1,1]+Phi[1,4,1] Phi[4,6,1] Phi[6,1,1]+Phi[2,6,1] Phi[3,4,1] Phi[4,2,1] Phi[5,3,1] Phi[6,5,1],{-(1/2),Sqrt[3]/2},{1,0}},
-{"PdP3c=SPP/2",{{1,0},{0,1},{-1,2},{-1,1},{-1,0},{0,-1}},{{{},{},{h1},{},{},{-h1+h3/2}},{{h2},{},{},{},{-h2+h3/2},{}},{{},{},{},{h2},{},{-h2+h3/2}},{{},{h1},{},{},{-h1+h3/2},{}},{{-h2+h3/2},{},{-h1+h3/2},{},{},{h1+h2}},{{},{-h1+h3/2},{},{-h2+h3/2},{h1+h2},{}}},Phi[1,3,1] Phi[3,4,1] Phi[4,5,1] Phi[5,1,1]+Phi[2,5,1] Phi[5,6,1] Phi[6,2,1]+Phi[1,6,1] Phi[2,1,1] Phi[4,2,1] Phi[6,4,1]+Phi[3,6,1] Phi[5,3,1] Phi[6,5,1],Phi[2,5,1] Phi[3,4,1] Phi[4,2,1] Phi[5,3,1]+Phi[1,3,1] Phi[2,1,1] Phi[3,6,1] Phi[6,2,1]+Phi[4,5,1] Phi[5,6,1] Phi[6,4,1]+Phi[1,6,1] Phi[5,1,1] Phi[6,5,1],{-(1/2),Sqrt[3]/2},{1,0}},
-{"PdP4a",{{1,0},{0,1},{-1,2},{-1,1},{-1,0},{0,-1},{1,-1}},{{{},{},{h2},{},{},{h1},{}},{{},{},{(35 h1)/4+(39 h2)/4-(23 h3)/4},{},{},{-((31 h1)/4)-(35 h2)/4+(23 h3)/4},{}},{{},{},{},{(5 h1)/2+(9 h2)/2-2 h3,-12 h1-16 h2+(19 h3)/2},{},{},{11 h1+13 h2-(15 h3)/2}},{{12 h1+15 h2-(17 h3)/2},{-((45 h1)/4)-(57 h2)/4+(35 h3)/4},{},{},{(19 h1)/4+(19 h2)/4-(11 h3)/4},{},{-9 h1-9 h2+6 h3}},{{},{},{-((29 h1)/4)-(37 h2)/4+(23 h3)/4},{},{},{(33 h1)/4+(41 h2)/4-(23 h3)/4},{}},{{},{},{},{19 h1+23 h2-(27 h3)/2,-13 h1-15 h2+(19 h3)/2},{},{},{-((9 h1)/2)-(13 h2)/2+4 h3}},{{-11 h1-14 h2+(17 h3)/2},{(49 h1)/4+(61 h2)/4-(35 h3)/4},{},{},{-((15 h1)/4)-(15 h2)/4+(11 h3)/4},{},{}}},Phi[1,3,1] Phi[3,4,2] Phi[4,1,1]+Phi[2,3,1] Phi[3,4,1] Phi[4,2,1]+Phi[4,5,1] Phi[5,6,1] Phi[6,4,2]+Phi[1,6,1] Phi[4,7,1] Phi[6,4,1] Phi[7,1,1]+Phi[2,6,1] Phi[6,7,1] Phi[7,2,1]+Phi[3,7,1] Phi[5,3,1] Phi[7,5,1],Phi[3,4,1] Phi[4,5,1] Phi[5,3,1]+Phi[2,6,1] Phi[4,2,1] Phi[6,4,1]+Phi[1,6,1] Phi[4,1,1] Phi[6,4,2]+Phi[1,3,1] Phi[3,7,1] Phi[7,1,1]+Phi[2,3,1] Phi[3,4,2] Phi[4,7,1] Phi[7,2,1]+Phi[5,6,1] Phi[6,7,1] Phi[7,5,1],{0,2},{1,-1}},
-{"PdP4b",{{1,0},{0,1},{-1,2},{-1,1},{-1,0},{-1,-1},{0,-1}},{{{},{},{h2},{},{},{h1},{-((3 h1)/4)-h2+(7 h3)/8}},{{-(h1/4)+h2+h3/8},{},{},{},{(5 h1)/4-h3/8},{-((3 h1)/4)-h2+(7 h3)/8},{}},{{},{},{},{-h1+h3/2},{},{},{(3 h1)/4+h3/8}},{{},{h2},{},{},{-(h1/4)-h2+(5 h3)/8},{},{}},{{(5 h1)/4-h3/8},{},{-(h1/4)-h2+(5 h3)/8},{},{},{-(h1/2)+h2+h3/4},{}},{{},{-((3 h1)/4)-h2+(7 h3)/8},{},{(3 h1)/4+h3/8},{},{},{-(h1/4)+h2+h3/8}},{{-((3 h1)/4)-h2+(7 h3)/8},{h1},{},{},{-(h1/2)+h2+h3/4},{},{}}},Phi[1,3,1] Phi[3,4,1] Phi[4,5,1] Phi[5,1,1]+Phi[2,5,1] Phi[5,6,1] Phi[6,2,1]+Phi[2,6,1] Phi[4,2,1] Phi[6,4,1]+Phi[1,6,1] Phi[6,7,1] Phi[7,1,1]+Phi[1,7,1] Phi[2,1,1] Phi[7,2,1]+Phi[3,7,1] Phi[5,3,1] Phi[7,5,1],Phi[2,5,1] Phi[3,4,1] Phi[4,2,1] Phi[5,3,1]+Phi[1,6,1] Phi[2,1,1] Phi[6,2,1]+Phi[4,5,1] Phi[5,6,1] Phi[6,4,1]+Phi[1,3,1] Phi[3,7,1] Phi[7,1,1]+Phi[2,6,1] Phi[6,7,1] Phi[7,2,1]+Phi[1,7,1] Phi[5,1,1] Phi[7,5,1],{0,1},{1,0}},
-{"PdP5a=Conifold/2x2",{{1,0},{1,1},{0,1},{-1,1},{-1,0},{-1,-1},{0,-1},{1,-1}},{{{},{},{h1},{-h1+h3/2},{},{},{},{}},{{},{},{-h1+h3/2},{h1},{},{},{},{}},{{},{},{},{},{h2},{-h2+h3/2},{},{}},{{},{},{},{},{-h2+h3/2},{h2},{},{}},{{},{},{},{},{},{},{-h1+h3/2},{h1}},{{},{},{},{},{},{},{h1},{-h1+h3/2}},{{-h2+h3/2},{h2},{},{},{},{},{},{}},{{h2},{-h2+h3/2},{},{},{},{},{},{}}},Phi[1,4,1] Phi[4,6,1] Phi[6,7,1] Phi[7,1,1]+Phi[2,4,1] Phi[4,5,1] Phi[5,7,1] Phi[7,2,1]+Phi[1,3,1] Phi[3,6,1] Phi[6,8,1] Phi[8,1,1]+Phi[2,3,1] Phi[3,5,1] Phi[5,8,1] Phi[8,2,1],Phi[1,3,1] Phi[3,5,1] Phi[5,7,1] Phi[7,1,1]+Phi[2,3,1] Phi[3,6,1] Phi[6,7,1] Phi[7,2,1]+Phi[1,4,1] Phi[4,5,1] Phi[5,8,1] Phi[8,1,1]+Phi[2,4,1] Phi[4,6,1] Phi[6,8,1] Phi[8,2,1],{0,1},{1,0}},
-{"PdP5b=L131/2",{{1,0},{0,1},{-1,2},{-1,1},{-1,0},{-1,-1},{0,-1},{1,-1},{1,0}},{{{},{},{},{h1},{},{},{h2},{-((4 h1)/5)-(4 h2)/5+(4 h3)/5}},{{},{},{-(h1/4)-(3 h2)/4+h3/2},{},{},{h1/20+(11 h2)/20+h3/5},{},{}},{{h1},{},{},{-((3 h1)/10)+(7 h2)/10+(3 h3)/10},{},{},{-((3 h1)/5)-(3 h2)/5+(3 h3)/5},{}},{{},{(11 h1)/20+h2/20+h3/5},{},{},{-(h1/4)-(3 h2)/4+h3/2},{},{},{-(h1/5)+(4 h2)/5+h3/5}},{{},{},{(11 h1)/20+h2/20+h3/5},{},{},{-((3 h1)/4)-h2/4+h3/2},{},{}},{{h2},{},{},{-((3 h1)/5)-(3 h2)/5+(3 h3)/5},{},{},{(7 h1)/10-(3 h2)/10+(3 h3)/10},{}},{{},{-((3 h1)/4)-h2/4+h3/2},{},{},{h1/20+(11 h2)/20+h3/5},{},{},{(4 h1)/5-h2/5+h3/5}},{{-((4 h1)/5)-(4 h2)/5+(4 h3)/5},{},{-(h1/5)+(4 h2)/5+h3/5},{},{},{(4 h1)/5-h2/5+h3/5},{},{}}},Phi[2,3,1] Phi[3,4,1] Phi[4,2,1]+Phi[1,4,1] Phi[4,5,1] Phi[5,6,1] Phi[6,1,1]+Phi[2,6,1] Phi[6,7,1] Phi[7,2,1]+Phi[3,7,1] Phi[5,3,1] Phi[7,5,1]+Phi[1,7,1] Phi[7,8,1] Phi[8,1,1]+Phi[1,8,1] Phi[3,1,1] Phi[8,3,1]+Phi[4,8,1] Phi[6,4,1] Phi[8,6,1],Phi[3,4,1] Phi[4,5,1] Phi[5,3,1]+Phi[2,6,1] Phi[4,2,1] Phi[6,4,1]+Phi[1,7,1] Phi[2,3,1] Phi[3,1,1] Phi[7,2,1]+Phi[5,6,1] Phi[6,7,1] Phi[7,5,1]+Phi[1,4,1] Phi[4,8,1] Phi[8,1,1]+Phi[3,7,1] Phi[7,8,1] Phi[8,3,1]+Phi[1,8,1] Phi[6,1,1] Phi[8,6,1],{0,1},{1,0}},
-{"PdP5c=C^3/4x2",{{1,0},{0,1},{-1,2},{-1,1},{-1,0},{-1,-1},{-1,-2},{0,-1}},{{{},{h1},{},{h2},{},{},{-h1-h2+h3},{}},{{h1},{},{h2},{},{},{},{},{-h1-h2+h3}},{{-h1-h2+h3},{},{},{h1},{},{h2},{},{}},{{},{-h1-h2+h3},{h1},{},{h2},{},{},{}},{{},{},{-h1-h2+h3},{},{},{h1},{},{h2}},{{},{},{},{-h1-h2+h3},{h1},{},{h2},{}},{{},{h2},{},{},{-h1-h2+h3},{},{},{h1}},{{h2},{},{},{},{},{-h1-h2+h3},{h1},{}}},Phi[2,3,1] Phi[3,4,1] Phi[4,2,1]+Phi[1,4,1] Phi[3,1,1] Phi[4,3,1]+Phi[4,5,1] Phi[5,6,1] Phi[6,4,1]+Phi[3,6,1] Phi[5,3,1] Phi[6,5,1]+Phi[1,7,1] Phi[2,1,1] Phi[7,2,1]+Phi[1,2,1] Phi[2,8,1] Phi[8,1,1]+Phi[6,7,1] Phi[7,8,1] Phi[8,6,1]+Phi[5,8,1] Phi[7,5,1] Phi[8,7,1],Phi[1,2,1] Phi[2,3,1] Phi[3,1,1]+Phi[1,4,1] Phi[2,1,1] Phi[4,2,1]+Phi[3,4,1] Phi[4,5,1] Phi[5,3,1]+Phi[3,6,1] Phi[4,3,1] Phi[6,4,1]+Phi[5,6,1] Phi[6,7,1] Phi[7,5,1]+Phi[1,7,1] Phi[7,8,1] Phi[8,1,1]+Phi[5,8,1] Phi[6,5,1] Phi[8,6,1]+Phi[2,8,1] Phi[7,2,1] Phi[8,7,1],{-(1/2),Sqrt[3]/2},{1,0}},
-{"PdP6=C^3/3x3",{{2,-1},{1,0},{0,1},{-1,2},{-1,1},{-1,0},{-1,-1},{0,-1},{1,-1}},{{{},{h1},{},{},{h2},{},{},{-h1-h2+h3},{}},{{},{},{-h1-h2+h3},{},{},{h1},{},{},{h2}},{{h2},{},{},{h1},{},{},{-h1-h2+h3},{},{}},{{},{h2},{},{},{-h1-h2+h3},{},{},{h1},{}},{{},{},{h2},{},{},{-h1-h2+h3},{},{},{h1}},{{h1},{},{},{-h1-h2+h3},{},{},{h2},{},{}},{{},{-h1-h2+h3},{},{},{h1},{},{},{h2},{}},{{},{},{h1},{},{},{h2},{},{},{-h1-h2+h3}},{{-h1-h2+h3},{},{},{h2},{},{},{h1},{},{}}},Phi[2,3,1] Phi[3,4,1] Phi[4,2,1]+Phi[1,5,1] Phi[5,6,1] Phi[6,1,1]+Phi[2,6,1] Phi[6,7,1] Phi[7,2,1]+Phi[3,7,1] Phi[5,3,1] Phi[7,5,1]+Phi[1,8,1] Phi[3,1,1] Phi[8,3,1]+Phi[4,8,1] Phi[6,4,1] Phi[8,6,1]+Phi[1,2,1] Phi[2,9,1] Phi[9,1,1]+Phi[4,5,1] Phi[5,9,1] Phi[9,4,1]+Phi[7,8,1] Phi[8,9,1] Phi[9,7,1],Phi[1,2,1] Phi[2,3,1] Phi[3,1,1]+Phi[3,4,1] Phi[4,5,1] Phi[5,3,1]+Phi[2,6,1] Phi[4,2,1] Phi[6,4,1]+Phi[5,6,1] Phi[6,7,1] Phi[7,5,1]+Phi[3,7,1] Phi[7,8,1] Phi[8,3,1]+Phi[1,8,1] Phi[6,1,1] Phi[8,6,1]+Phi[1,5,1] Phi[5,9,1] Phi[9,1,1]+Phi[4,8,1] Phi[8,9,1] Phi[9,4,1]+Phi[2,9,1] Phi[7,2,1] Phi[9,7,1],{-(1/2),Sqrt[3]/2},{1,0}},
-{"L152",{{-1,-1},{0,-1},{2,0},{0,1}},{{{},{h1,h2},{},{-((13 h1)/14)-h2+(27 h3)/28},{},{}},{{},{},{-(h1/7)+h2+h3/14,(6 h1)/7+h3/14},{},{},{-((4 h1)/7)-h2+(11 h3)/14}},{{-((6 h1)/7)-h2+(13 h3)/14},{},{},{h2,h1},{},{}},{{},{-((6 h1)/7)-h2+(13 h3)/14},{},{},{(4 h1)/7+(3 h3)/14},{(5 h1)/14+h2-(5 h3)/28}},{{(5 h1)/14+h2-(5 h3)/28},{},{-((4 h1)/7)-h2+(11 h3)/14},{},{},{}},{{(4 h1)/7+(3 h3)/14},{},{},{},{-((11 h1)/14)+(11 h3)/28},{}}},Phi[1,2,1] Phi[2,3,1] Phi[3,1,1]+Phi[2,3,2] Phi[3,4,1] Phi[4,2,1]+Phi[1,4,1] Phi[4,5,1] Phi[5,1,1]+Phi[1,2,2] Phi[2,6,1] Phi[6,1,1]+Phi[3,4,2] Phi[4,6,1] Phi[5,3,1] Phi[6,5,1],Phi[1,2,2] Phi[2,3,2] Phi[3,1,1]+Phi[2,3,1] Phi[3,4,2] Phi[4,2,1]+Phi[3,4,1] Phi[4,5,1] Phi[5,3,1]+Phi[1,4,1] Phi[4,6,1] Phi[6,1,1]+Phi[1,2,1] Phi[2,6,1] Phi[5,1,1] Phi[6,5,1],{-(1/2),Sqrt[3]/2},{1,0}},
-{"Y30",{{1,0},{0,2},{-1,1},{0,-1}},{{{},{h1,-h1+h3/2},{},{},{},{}},{{},{},{h2},{},{-h2+h3/2},{}},{{},{},{},{h1,-h1+h3/2},{},{}},{{-h2+h3/2},{},{},{},{h2},{}},{{},{},{},{},{},{h1,-h1+h3/2}},{{h2},{},{-h2+h3/2},{},{},{}}},Phi[1,2,1] Phi[2,3,1] Phi[3,4,2] Phi[4,1,1]+Phi[1,2,2] Phi[2,5,1] Phi[5,6,1] Phi[6,1,1]+Phi[3,4,1] Phi[4,5,1] Phi[5,6,2] Phi[6,3,1],Phi[1,2,2] Phi[2,3,1] Phi[3,4,1] Phi[4,1,1]+Phi[1,2,1] Phi[2,5,1] Phi[5,6,2] Phi[6,1,1]+Phi[3,4,2] Phi[4,5,1] Phi[5,6,1] Phi[6,3,1],{1,0},{0,1}},
-{"Y31",{{1,0},{0,2},{-1,0},{0,-1}},{{{},{h1,-h1-(3 h2)/5+(4 h3)/5},{},{},{h2},{}},{{},{},{-((8 h2)/5)+(4 h3)/5},{},{},{h2}},{{},{},{},{h1+(2 h2)/5-h3/5,-h1-h2/5+(3 h3)/5},{},{}},{{(9 h2)/5-(2 h3)/5},{},{},{},{-((8 h2)/5)+(4 h3)/5},{}},{{},{},{},{},{},{h1,-h1-(3 h2)/5+(4 h3)/5}},{{h1-(2 h2)/5+h3/5,-h1-h2+h3},{},{(9 h2)/5-(2 h3)/5},{},{},{}}},Phi[1,2,1] Phi[2,3,1] Phi[3,4,2] Phi[4,1,1]+Phi[1,2,2] Phi[2,6,1] Phi[6,1,1]+Phi[1,5,1] Phi[5,6,1] Phi[6,1,2]+Phi[3,4,1] Phi[4,5,1] Phi[5,6,2] Phi[6,3,1],Phi[1,2,2] Phi[2,3,1] Phi[3,4,1] Phi[4,1,1]+Phi[1,5,1] Phi[5,6,2] Phi[6,1,1]+Phi[1,2,1] Phi[2,6,1] Phi[6,1,2]+Phi[3,4,2] Phi[4,5,1] Phi[5,6,1] Phi[6,3,1],{1,0},{0,1}},
-{"Y32=L153",{{-1,0},{-1,-1},{0,-1},{2,2}},{{{},{h1,h2},{},{},{},{}},{{},{},{(7 h1)/4+(3 h2)/4-(3 h3)/8,(3 h1)/4+(7 h2)/4-(3 h3)/8},{},{-((15 h1)/4)-(15 h2)/4+(19 h3)/8},{}},{{-((7 h1)/4)-(7 h2)/4+(11 h3)/8},{},{},{(3 h1)/2+h2/2-h3/4,h1/2+(3 h2)/2-h3/4},{},{}},{{},{-((9 h1)/4)-(9 h2)/4+(13 h3)/8},{},{},{(7 h1)/4+(3 h2)/4-(3 h3)/8,(3 h1)/4+(7 h2)/4-(3 h3)/8},{}},{{},{},{-((9 h1)/4)-(9 h2)/4+(13 h3)/8},{},{},{h1,h2}},{{(11 h1)/4+(11 h2)/4-(11 h3)/8},{},{},{-((7 h1)/4)-(7 h2)/4+(11 h3)/8},{},{}}},Phi[1,2,1] Phi[2,3,2] Phi[3,1,1]+Phi[2,3,1] Phi[3,4,2] Phi[4,2,1]+Phi[3,4,1] Phi[4,5,2] Phi[5,3,1]+Phi[1,2,2] Phi[2,5,1] Phi[5,6,1] Phi[6,1,1]+Phi[4,5,1] Phi[5,6,2] Phi[6,4,1],Phi[1,2,2] Phi[2,3,1] Phi[3,1,1]+Phi[2,3,2] Phi[3,4,1] Phi[4,2,1]+Phi[3,4,2] Phi[4,5,1] Phi[5,3,1]+Phi[1,2,1] Phi[2,5,1] Phi[5,6,2] Phi[6,1,1]+Phi[4,5,2] Phi[5,6,1] Phi[6,4,1],{1/2,Sqrt[3]/2},{1,0}},
-{"C^3/(1,1,3)",{{-1,0},{0,-1},{2,2}},{{{},{h1,h2},{},{-h1-h2+h3},{}},{{},{},{h1,h2},{},{-h1-h2+h3}},{{-h1-h2+h3},{},{},{h1,h2},{}},{{},{-h1-h2+h3},{},{},{h1,h2}},{{h1,h2},{},{-h1-h2+h3},{},{}}},Phi[1,2,1] Phi[2,3,2] Phi[3,1,1]+Phi[2,3,1] Phi[3,4,2] Phi[4,2,1]+Phi[1,2,2] Phi[2,5,1] Phi[5,1,1]+Phi[1,4,1] Phi[4,5,1] Phi[5,1,2]+Phi[3,4,1] Phi[4,5,2] Phi[5,3,1],Phi[1,2,2] Phi[2,3,1] Phi[3,1,1]+Phi[2,3,2] Phi[3,4,1] Phi[4,2,1]+Phi[1,4,1] Phi[4,5,2] Phi[5,1,1]+Phi[1,2,1] Phi[2,5,1] Phi[5,1,2]+Phi[3,4,2] Phi[4,5,1] Phi[5,3,1],{-(1/2),Sqrt[3]/2},{1,0}},
-{"C^3/(1,1,4)",{{-1,0},{0,-1},{1,4}},{{{},{h1,h2},{},{},{-h1-h2+h3},{}},{{},{},{h1,h2},{},{},{-h1-h2+h3}},{{-h1-h2+h3},{},{},{h1,h2},{},{}},{{},{-h1-h2+h3},{},{},{h1,h2},{}},{{},{},{-h1-h2+h3},{},{},{h1,h2}},{{h1,h2},{},{},{-h1-h2+h3},{},{}}},Phi[1,2,1] Phi[2,3,2] Phi[3,1,1]+Phi[2,3,1] Phi[3,4,2] Phi[4,2,1]+Phi[3,4,1] Phi[4,5,2] Phi[5,3,1]+Phi[1,2,2] Phi[2,6,1] Phi[6,1,1]+Phi[1,5,1] Phi[5,6,1] Phi[6,1,2]+Phi[4,5,1] Phi[5,6,2] Phi[6,4,1],Phi[1,2,2] Phi[2,3,1] Phi[3,1,1]+Phi[2,3,2] Phi[3,4,1] Phi[4,2,1]+Phi[3,4,2] Phi[4,5,1] Phi[5,3,1]+Phi[1,5,1] Phi[5,6,2] Phi[6,1,1]+Phi[1,2,1] Phi[2,6,1] Phi[6,1,2]+Phi[4,5,2] Phi[5,6,1] Phi[6,4,1],{-(1/2),Sqrt[3]/2},{1,0}}
+{"C^3",{{0,0},{0,1},{1,0}},{{{h1+h3/3,h2+h3/3,-h1-h2+h3/3}}},Phi[1,1,1]**Phi[1,1,2]**Phi[1,1,3],Phi[1,1,1]**Phi[1,1,3]**Phi[1,1,2],{-(1/2),Sqrt[3]/2},{1,0}},
+{"Conifold=Y10",{{0,0},{0,1},{1,1},{1,0},{0,0},{1,1}},{{{},{h1+h3/4,-h1+h3/4}},{{h2+h3/4,-h2+h3/4},{}}},Phi[1,2,1]**Phi[2,1,1]**Phi[1,2,2]**Phi[2,1,2],Phi[1,2,1]**Phi[2,1,2]**Phi[1,2,2]**Phi[2,1,1],{-(1/2),Sqrt[3]/2},{1,0}},
+{"C^2xC/2",{{0,1},{0,0},{1,0},{2,0},{0,1},{1,0}},{{{h1},{h2,-h1-h2+h3}},{{h2,-h1-h2+h3},{h1}}},Phi[1,1,1]**Phi[1,2,2]**Phi[2,1,1]+Phi[1,1,1]**Phi[1,2,1]**Phi[2,1,2],Phi[1,2,2]**Phi[2,1,1]**Phi[2,2,1]+Phi[1,2,1]**Phi[2,1,2]**Phi[2,2,1],{-(1/2),Sqrt[3]/2},{1,0}},
+{"C^2xC/3",{{0,1},{0,0},{1,0},{2,0},{3,0},{0,1},{1,0},{2,0},{0,1}},{{{h1},{h2},{-h1-h2+h3}},{{-h1-h2+h3},{h1},{h2}},{{h2},{-h1-h2+h3},{h1}}},Phi[1,1,1]**Phi[1,2,1]**Phi[2,1,1]+Phi[2,2,1]**Phi[2,3,1]**Phi[3,2,1]+Phi[1,3,1]**Phi[3,1,1]**Phi[3,3,1],Phi[1,2,1]**Phi[2,1,1]**Phi[2,2,1]+Phi[1,1,1]**Phi[1,3,1]**Phi[3,1,1]+Phi[2,3,1]**Phi[3,2,1]**Phi[3,3,1],{-(1/2),Sqrt[3]/2},{1,0}},
+{"C^3/2x2",{{0,0},{2,0},{0,2},{0,1},{1,0},{1,1},{0,1}},{{{},{h1},{h2},{-h1-h2+h3}},{{h1},{},{-h1-h2+h3},{h2}},{{h2},{-h1-h2+h3},{},{h1}},{{-h1-h2+h3},{h2},{h1},{}}},Phi[1,3,1]**Phi[2,1,1]**Phi[3,2,1]+Phi[1,2,1]**Phi[2,4,1]**Phi[4,1,1]+Phi[2,3,1]**Phi[3,4,1]**Phi[4,2,1]+Phi[1,4,1]**Phi[3,1,1]**Phi[4,3,1],Phi[1,2,1]**Phi[2,3,1]**Phi[3,1,1]+Phi[1,3,1]**Phi[3,4,1]**Phi[4,1,1]+Phi[1,4,1]**Phi[2,1,1]**Phi[4,2,1]+Phi[2,4,1]**Phi[3,2,1]**Phi[4,3,1],{-(1/2),Sqrt[3]/2},{1,0}},
+{"SPP=L121",{{0,0},{2,0},{1,1},{0,1},{0,0},{1,1},{1,0}},{{{-h1-h2+h3},{h1},{h2}},{{h2},{},{-h2+h3/2}},{{h1},{-h1+h3/2},{}}},Phi[1,1,1]**Phi[1,3,1]**Phi[3,1,1]+Phi[1,2,1]**Phi[2,1,1]**Phi[2,3,1]**Phi[3,2,1],Phi[1,1,1]**Phi[1,2,1]**Phi[2,1,1]+Phi[1,3,1]**Phi[2,3,1]**Phi[3,1,1]**Phi[3,2,1],{0,1},{1,0}},
+{"L131",{{0,0},{1,-1},{1,0},{1,1},{1,2},{0,1}},{{{h2},{h1},{},{-h1-h2+h3}},{{-h1-h2+h3},{h2},{h1},{}},{{},{-h1-h2+h3},{},{h1+h2-h3/2}},{{h1},{},{-h1+h3/2},{}}},Phi[1,1,1]**Phi[1,2,1]**Phi[2,1,1]+Phi[2,2,1]**Phi[2,3,1]**Phi[3,2,1]+Phi[1,4,1]**Phi[3,4,1]**Phi[4,1,1]**Phi[4,3,1],Phi[1,2,1]**Phi[2,1,1]**Phi[2,2,1]+Phi[1,1,1]**Phi[1,4,1]**Phi[4,1,1]+Phi[2,3,1]**Phi[3,2,1]**Phi[3,4,1]**Phi[4,3,1],{-(1/2),Sqrt[3]/2},{1,0}},
+{"P2=C^3/(1,1,1)",{{0,0},{1,0},{0,1},{-1,-1},{1,0},{0,1},{0,0},{-1,-1}},{{{},{h1,h2,-h1-h2+h3},{}},{{},{},{h1,h2,-h1-h2+h3}},{{h1,h2,-h1-h2+h3},{},{}}},Phi[1,2,2]**Phi[2,3,3]**Phi[3,1,1]+Phi[1,2,3]**Phi[2,3,1]**Phi[3,1,2]+Phi[1,2,1]**Phi[2,3,2]**Phi[3,1,3],Phi[1,2,3]**Phi[2,3,2]**Phi[3,1,1]+Phi[1,2,1]**Phi[2,3,3]**Phi[3,1,2]+Phi[1,2,2]**Phi[2,3,1]**Phi[3,1,3],{-(1/2),Sqrt[3]/2},{1,0}},
+{"F0.1=P1xP1",{{1,0},{0,1},{-1,0},{0,-1},{1,0},{-1,0},{0,1},{0,-1}},{{{},{h1,-h1+(2 h3)/3},{h2,-h2+(2 h3)/3},{}},{{},{},{},{h2,-h2+(2 h3)/3}},{{},{},{},{h1,-h1+(2 h3)/3}},{{h1+h2-h3/3,h1-h2+h3/3,-h1+h2+h3/3,-h1-h2+h3},{},{},{}}},Phi[1,2,2]**Phi[2,4,2]**Phi[4,1,1]+Phi[1,3,1]**Phi[3,4,2]**Phi[4,1,2]+Phi[1,3,2]**Phi[3,4,1]**Phi[4,1,3]+Phi[1,2,1]**Phi[2,4,1]**Phi[4,1,4],Phi[1,3,2]**Phi[3,4,2]**Phi[4,1,1]+Phi[1,2,2]**Phi[2,4,1]**Phi[4,1,2]+Phi[1,2,1]**Phi[2,4,2]**Phi[4,1,3]+Phi[1,3,1]**Phi[3,4,1]**Phi[4,1,4],{-(1/2),Sqrt[3]/2},{1,0}},
+{"F0.2=P1xP1",{{1,0},{0,1},{-1,0},{0,-1},{1,0},{-1,0},{0,1},{0,-1}},{{{},{h1,-h1+h3/2},{},{}},{{},{},{h2,-h2+h3/2},{}},{{},{},{},{h1,-h1+h3/2}},{{h2,-h2+h3/2},{},{},{}}},Phi[1,2,1]**Phi[2,3,2]**Phi[3,4,2]**Phi[4,1,1]+Phi[1,2,1]**Phi[2,3,1]**Phi[3,4,2]**Phi[4,1,2],Phi[1,2,2]**Phi[2,3,2]**Phi[3,4,1]**Phi[4,1,1]+Phi[1,2,2]**Phi[2,3,1]**Phi[3,4,1]**Phi[4,1,2],{-(1/2),Sqrt[3]/2},{1,0}},
+{"F1=dP1=Y21=L312",{{1,0},{0,1},{-1,1},{0,-1},{1,0}},{{{},{h1},{-((2 h1)/3)+h3/2},{}},{{},{},{h2,h1/3-h2+h3/2},{}},{{},{},{},{h1/3+h2,-((4 h1)/3)+h3/2,(2 h1)/3-h2+h3/2}},{{h2,h1/3-h2+h3/2},{-((2 h1)/3)+h3/2},{},{}}},Phi[1,2,1]**Phi[2,3,2]**Phi[3,4,2]**Phi[4,1,1]+Phi[1,3,1]**Phi[3,4,1]**Phi[4,1,2]+Phi[2,3,1]**Phi[3,4,3]**Phi[4,2,1],Phi[1,3,1]**Phi[3,4,3]**Phi[4,1,1]+Phi[1,2,1]**Phi[2,3,1]**Phi[3,4,2]**Phi[4,1,2]+Phi[2,3,2]**Phi[3,4,1]**Phi[4,2,1],{0,1},{1,0.2}},
+{"F2=C^3/(1,1,2)",{{1,0},{0,1},{-1,2},{0,-1},{1,0}},{{{},{h1,h2},{-h1-h2+h3},{}},{{},{},{h1,h2},{-h1-h2+h3}},{{-h1-h2+h3},{},{},{h1,h2}},{{h1,h2},{-h1-h2+h3},{},{}}},Phi[1,2,1]**Phi[2,3,2]**Phi[3,1,1]+Phi[1,2,2]**Phi[2,4,1]**Phi[4,1,1]+Phi[1,3,1]**Phi[3,4,1]**Phi[4,1,2]+Phi[2,3,1]**Phi[3,4,2]**Phi[4,2,1],Phi[1,2,2]**Phi[2,3,1]**Phi[3,1,1]+Phi[1,3,1]**Phi[3,4,2]**Phi[4,1,1]+Phi[1,2,1]**Phi[2,4,1]**Phi[4,1,2]+Phi[2,3,2]**Phi[3,4,1]**Phi[4,2,1],{-(1/2),Sqrt[3]/2},{1,0}},
+{"dP2.1",{{1,0},{0,1},{-1,0},{-1,-1},{0,-1}},{{{},{h1},{h2},{},{}},{{},{},{},{2 h1+3 h2-h3,-((8 h1)/3)-(11 h2)/3+2 h3},{}},{{},{},{},{3 h1+2 h2-h3,-((11 h1)/3)-(8 h2)/3+2 h3},{}},{{-3 h1-3 h2+2 h3},{},{},{},{-(h1/3)-(7 h2)/3+h3,-((7 h1)/3)-h2/3+h3,(13 h1)/3+(13 h2)/3-2 h3}},{{4 h1+4 h2-2 h3},{-((5 h1)/3)-(2 h2)/3+h3},{-((2 h1)/3)-(5 h2)/3+h3},{},{}}},Phi[1,3,1]**Phi[3,4,1]**Phi[4,1,1]+Phi[1,2,1]**Phi[2,4,2]**Phi[4,5,2]**Phi[5,1,1]+Phi[2,4,1]**Phi[4,5,1]**Phi[5,2,1]+Phi[3,4,2]**Phi[4,5,3]**Phi[5,3,1],Phi[1,2,1]**Phi[2,4,1]**Phi[4,1,1]+Phi[1,3,1]**Phi[3,4,2]**Phi[4,5,1]**Phi[5,1,1]+Phi[2,4,2]**Phi[4,5,3]**Phi[5,2,1]+Phi[3,4,1]**Phi[4,5,2]**Phi[5,3,1],{-(1/3),1},{1,0}},
+{"dP2.2",{{1,0},{0,1},{-1,0},{-1,-1},{0,-1}},{{{},{h1,h2},{},{},{}},{{},{},{-2 h1-3 h2+(3 h3)/2,h1+2 h2-h3/2},{(4 h1)/5+(2 h2)/5+h3/10},{}},{{},{},{},{-((6 h1)/5)-(3 h2)/5+(3 h3)/5},{h1/5-(2 h2)/5+(2 h3)/5}},{{-((4 h1)/5)-(7 h2)/5+(9 h3)/10},{},{},{},{(2 h1)/5+(6 h2)/5-h3/5}},{{(9 h1)/5+(12 h2)/5-(9 h3)/10},{-((6 h1)/5)-(8 h2)/5+(11 h3)/10},{},{},{}}},Phi[1,2,1]**Phi[2,3,2]**Phi[3,4,1]**Phi[4,1,1]+Phi[1,2,2]**Phi[2,3,1]**Phi[3,5,1]**Phi[5,1,1]+Phi[2,4,1]**Phi[4,5,1]**Phi[5,2,1],Phi[1,2,2]**Phi[2,4,1]**Phi[4,1,1]+Phi[1,2,1]**Phi[2,3,1]**Phi[3,4,1]**Phi[4,5,1]**Phi[5,1,1]+Phi[2,3,2]**Phi[3,5,1]**Phi[5,2,1],{0,1},{3/2,-(1/3)}},
+{"dP3.1",{{1,0},{1,1},{0,1},{-1,0},{-1,-1},{0,-1}},{{{},{h1},{h2},{},{},{}},{{},{},{-h1-3 h2+(4 h3)/3},{h1+2 h2-h3/2},{},{}},{{},{},{},{-2 h1-3 h2+(3 h3)/2},{h1+h2-h3/6},{}},{{},{},{},{},{-h1+h3/3},{-h2+(2 h3)/3}},{{-h1-2 h2+(7 h3)/6},{},{},{},{},{h1+3 h2-h3}},{{2 h1+3 h2-(7 h3)/6},{-h1-h2+(5 h3)/6},{},{},{},{}}},Phi[1,3,1]**Phi[3,5,1]**Phi[5,1,1]+Phi[1,2,1]**Phi[2,3,1]**Phi[3,4,1]**Phi[4,5,1]**Phi[5,6,1]**Phi[6,1,1]+Phi[2,4,1]**Phi[4,6,1]**Phi[6,2,1],Phi[1,2,1]**Phi[2,4,1]**Phi[4,5,1]**Phi[5,1,1]+Phi[1,3,1]**Phi[3,4,1]**Phi[4,6,1]**Phi[6,1,1]+Phi[2,3,1]**Phi[3,5,1]**Phi[5,6,1]**Phi[6,2,1],{-(1/2),Sqrt[3]/2},{1,0}},
+{"dP3.2",{{1,0},{1,1},{0,1},{-1,0},{-1,-1},{0,-1}},{{{},{h1,-h1+h3/2},{h2},{},{},{}},{{},{},{-2 h2+(7 h3)/8},{h1/2+h2/2+h3/16},{-(h1/2)+h2/2+(5 h3)/16},{}},{{},{},{},{-(h1/2)-h2/2+(9 h3)/16},{h1/2-h2/2+(5 h3)/16},{}},{{h1/2-h2/2+(7 h3)/16},{},{},{},{},{-(h1/2)+h2/2+(3 h3)/16}},{{-(h1/2)-h2/2+(11 h3)/16},{},{},{},{},{h1/2+h2/2-h3/16}},{{2 h2-(5 h3)/8},{-h2+(3 h3)/4},{},{},{},{}}},Phi[1,2,2]**Phi[2,4,1]**Phi[4,1,1]+Phi[1,3,1]**Phi[3,5,1]**Phi[5,1,1]+Phi[1,2,1]**Phi[2,3,1]**Phi[3,4,1]**Phi[4,6,1]**Phi[6,1,1]+Phi[2,5,1]**Phi[5,6,1]**Phi[6,2,1],Phi[1,3,1]**Phi[3,4,1]**Phi[4,1,1]+Phi[1,2,1]**Phi[2,5,1]**Phi[5,1,1]+Phi[1,2,2]**Phi[2,3,1]**Phi[3,5,1]**Phi[5,6,1]**Phi[6,1,1]+Phi[2,4,1]**Phi[4,6,1]**Phi[6,2,1],{0,3/2},{1,0}},
+{"dP3.3",{{1,0},{1,1},{0,1},{-1,0},{-1,-1},{0,-1}},{{{},{h1,-h1+(2 h3)/5},{h2},{-h2+(4 h3)/5},{},{}},{{},{},{-h2+(3 h3)/5},{h2-h3/5},{},{}},{{},{},{},{},{-(h1/2)+(2 h3)/5},{h1/2+h3/5}},{{},{},{},{},{h1/2+h3/5},{-(h1/2)+(2 h3)/5}},{{h1/2-h2+(3 h3)/5,-(h1/2)+h2},{},{},{},{},{}},{{-(h1/2)-h2+(4 h3)/5,h1/2+h2-h3/5},{},{},{},{},{}}},Phi[1,3,1]**Phi[3,5,1]**Phi[5,1,1]+Phi[1,2,2]**Phi[2,4,1]**Phi[4,5,1]**Phi[5,1,1]+Phi[1,2,2]**Phi[2,3,1]**Phi[3,6,1]**Phi[6,1,2]+Phi[1,4,1]**Phi[4,6,1]**Phi[6,1,2],Phi[1,2,1]**Phi[2,3,1]**Phi[3,5,1]**Phi[5,1,2]+Phi[1,4,1]**Phi[4,5,1]**Phi[5,1,2]+Phi[1,3,1]**Phi[3,6,1]**Phi[6,1,1]+Phi[1,2,1]**Phi[2,4,1]**Phi[4,6,1]**Phi[6,1,1],{0,2},{1,0}},
+{"dP3.4",{{1,0},{1,1},{0,1},{-1,0},{-1,-1},{0,-1}},{{{},{h1,h2,-h1-h2+h3},{-h1+(2 h3)/3,-h2+(2 h3)/3,h1+h2-h3/3},{},{},{}},{{},{},{},{-(h1/2)-h2/2+(2 h3)/3},{h2/2+h3/6},{h1/2+h3/6}},{{},{},{},{h1/2+h2/2},{-(h2/2)+h3/2},{-(h1/2)+h3/2}},{{-(h1/2)+h2/2+h3/3,h1/2-h2/2+h3/3},{},{},{},{},{}},{{h1+h2/2-h3/6,-h1-h2/2+(5 h3)/6},{},{},{},{},{}},{{-(h1/2)-h2+(5 h3)/6,h1/2+h2-h3/6},{},{},{},{},{}}},Phi[1,2,1]**Phi[2,4,1]**Phi[4,1,1]+Phi[1,3,1]**Phi[3,4,1]**Phi[4,1,2]+Phi[1,2,3]**Phi[2,5,1]**Phi[5,1,1]+Phi[1,3,3]**Phi[3,5,1]**Phi[5,1,2]+Phi[1,2,2]**Phi[2,6,1]**Phi[6,1,1]+Phi[1,3,2]**Phi[3,6,1]**Phi[6,1,2],Phi[1,3,2]**Phi[3,4,1]**Phi[4,1,1]+Phi[1,2,2]**Phi[2,4,1]**Phi[4,1,2]+Phi[1,3,1]**Phi[3,5,1]**Phi[5,1,1]+Phi[1,2,1]**Phi[2,5,1]**Phi[5,1,2]+Phi[1,3,3]**Phi[3,6,1]**Phi[6,1,1]+Phi[1,2,3]**Phi[2,6,1]**Phi[6,1,2],{-(1/2),Sqrt[3]/2},{1,0}},
+{"PdP2",{{1,0},{-1,1},{-1,0},{-1,-1},{0,-1}},{{{},{h1,h2},{-h1-h2+h3},{},{}},{{},{},{h1,h2},{-((3 h1)/5)-h2+(4 h3)/5},{}},{{-h1-h2+h3},{},{},{(2 h1)/5+h2-h3/5},{(3 h1)/5+h3/5}},{{(3 h1)/5+h3/5},{},{},{},{-((4 h1)/5)+(2 h3)/5}},{{(2 h1)/5+h2-h3/5},{-((3 h1)/5)-h2+(4 h3)/5},{},{},{}}},Phi[1,2,2]**Phi[2,3,1]**Phi[3,1,1]+Phi[1,3,1]**Phi[3,4,1]**Phi[4,1,1]+Phi[1,3,1]**Phi[3,5,1]**Phi[5,1,1]+Phi[2,3,1]**Phi[3,4,1]**Phi[4,5,1]**Phi[5,2,1],Phi[1,2,1]**Phi[2,3,2]**Phi[3,1,1]+Phi[1,2,2]**Phi[2,4,1]**Phi[4,1,1]+Phi[1,2,1]**Phi[2,4,1]**Phi[4,5,1]**Phi[5,1,1]+Phi[2,3,2]**Phi[3,5,1]**Phi[5,2,1],{-(1/2),Sqrt[3]/2},{1,0}},
+{"PdP3a=C^3/(1,2,3)",{{-1,0},{0,-1},{2,3}},{{{},{h1},{h2},{-h1-h2+h3},{},{}},{{},{},{h1},{h2},{-h1-h2+h3},{}},{{},{},{},{h1},{h2},{-h1-h2+h3}},{{-h1-h2+h3},{},{},{},{h1},{h2}},{{h2},{-h1-h2+h3},{},{},{},{h1}},{{h1},{h2},{-h1-h2+h3},{},{},{}}},Phi[1,2,1]**Phi[2,4,1]**Phi[4,1,1]+Phi[1,4,1]**Phi[4,5,1]**Phi[5,1,1]+Phi[2,3,1]**Phi[3,5,1]**Phi[5,2,1]+Phi[1,3,1]**Phi[3,6,1]**Phi[6,1,1]+Phi[2,5,1]**Phi[5,6,1]**Phi[6,2,1]+Phi[3,4,1]**Phi[4,6,1]**Phi[6,3,1],Phi[1,3,1]**Phi[3,4,1]**Phi[4,1,1]+Phi[1,2,1]**Phi[2,5,1]**Phi[5,1,1]+Phi[2,4,1]**Phi[4,5,1]**Phi[5,2,1]+Phi[1,4,1]**Phi[4,6,1]**Phi[6,1,1]+Phi[2,3,1]**Phi[3,6,1]**Phi[6,2,1]+Phi[3,5,1]**Phi[5,6,1]**Phi[6,3,1],{-(1/2),Sqrt[3]/2},{1,0}},
+{"PdP3b",{{1,0},{0,1},{-1,1},{-1,0},{-1,-1},{0,-1}},{{{},{h1},{h2},{-h1-h2+h3},{},{}},{{h1},{},{},{},{h1/3+h2},{-((4 h1)/3)-h2+h3}},{{},{-h1-h2+h3},{},{(5 h1)/3+2 h2-h3},{},{}},{{},{h2},{},{},{},{(2 h1)/3}},{{-((4 h1)/3)-h2+h3},{},{(2 h1)/3},{},{},{}},{{h1/3+h2},{},{},{},{-h1-2 h2+h3},{}}},Phi[1,4,1]**Phi[2,1,1]**Phi[4,2,1]+Phi[2,5,1]**Phi[3,2,1]**Phi[5,3,1]+Phi[1,2,1]**Phi[2,6,1]**Phi[6,1,1]+Phi[1,3,1]**Phi[3,4,1]**Phi[4,6,1]**Phi[5,1,1]**Phi[6,5,1],Phi[1,3,1]**Phi[2,1,1]**Phi[3,2,1]+Phi[1,2,1]**Phi[2,5,1]**Phi[5,1,1]+Phi[1,4,1]**Phi[4,6,1]**Phi[6,1,1]+Phi[2,6,1]**Phi[3,4,1]**Phi[4,2,1]**Phi[5,3,1]**Phi[6,5,1],{-(1/2),Sqrt[3]/2},{1,0}},
+{"PdP3c=SPP/2",{{1,0},{0,1},{-1,2},{-1,1},{-1,0},{0,-1}},{{{},{},{h1},{},{},{-h1+h3/2}},{{h2},{},{},{},{-h2+h3/2},{}},{{},{},{},{h2},{},{-h2+h3/2}},{{},{h1},{},{},{-h1+h3/2},{}},{{-h2+h3/2},{},{-h1+h3/2},{},{},{h1+h2}},{{},{-h1+h3/2},{},{-h2+h3/2},{h1+h2},{}}},Phi[1,3,1]**Phi[3,4,1]**Phi[4,5,1]**Phi[5,1,1]+Phi[2,5,1]**Phi[5,6,1]**Phi[6,2,1]+Phi[1,6,1]**Phi[2,1,1]**Phi[4,2,1]**Phi[6,4,1]+Phi[3,6,1]**Phi[5,3,1]**Phi[6,5,1],Phi[2,5,1]**Phi[3,4,1]**Phi[4,2,1]**Phi[5,3,1]+Phi[1,3,1]**Phi[2,1,1]**Phi[3,6,1]**Phi[6,2,1]+Phi[4,5,1]**Phi[5,6,1]**Phi[6,4,1]+Phi[1,6,1]**Phi[5,1,1]**Phi[6,5,1],{-(1/2),Sqrt[3]/2},{1,0}},
+{"PdP4a",{{1,0},{0,1},{-1,2},{-1,1},{-1,0},{0,-1},{1,-1}},{{{},{},{h2},{},{},{h1},{}},{{},{},{(35 h1)/4+(39 h2)/4-(23 h3)/4},{},{},{-((31 h1)/4)-(35 h2)/4+(23 h3)/4},{}},{{},{},{},{(5 h1)/2+(9 h2)/2-2 h3,-12 h1-16 h2+(19 h3)/2},{},{},{11 h1+13 h2-(15 h3)/2}},{{12 h1+15 h2-(17 h3)/2},{-((45 h1)/4)-(57 h2)/4+(35 h3)/4},{},{},{(19 h1)/4+(19 h2)/4-(11 h3)/4},{},{-9 h1-9 h2+6 h3}},{{},{},{-((29 h1)/4)-(37 h2)/4+(23 h3)/4},{},{},{(33 h1)/4+(41 h2)/4-(23 h3)/4},{}},{{},{},{},{19 h1+23 h2-(27 h3)/2,-13 h1-15 h2+(19 h3)/2},{},{},{-((9 h1)/2)-(13 h2)/2+4 h3}},{{-11 h1-14 h2+(17 h3)/2},{(49 h1)/4+(61 h2)/4-(35 h3)/4},{},{},{-((15 h1)/4)-(15 h2)/4+(11 h3)/4},{},{}}},Phi[1,3,1]**Phi[3,4,2]**Phi[4,1,1]+Phi[2,3,1]**Phi[3,4,1]**Phi[4,2,1]+Phi[4,5,1]**Phi[5,6,1]**Phi[6,4,2]+Phi[1,6,1]**Phi[4,7,1]**Phi[6,4,1]**Phi[7,1,1]+Phi[2,6,1]**Phi[6,7,1]**Phi[7,2,1]+Phi[3,7,1]**Phi[5,3,1]**Phi[7,5,1],Phi[3,4,1]**Phi[4,5,1]**Phi[5,3,1]+Phi[2,6,1]**Phi[4,2,1]**Phi[6,4,1]+Phi[1,6,1]**Phi[4,1,1]**Phi[6,4,2]+Phi[1,3,1]**Phi[3,7,1]**Phi[7,1,1]+Phi[2,3,1]**Phi[3,4,2]**Phi[4,7,1]**Phi[7,2,1]+Phi[5,6,1]**Phi[6,7,1]**Phi[7,5,1],{0,2},{1,-1}},
+{"PdP4b",{{1,0},{0,1},{-1,2},{-1,1},{-1,0},{-1,-1},{0,-1}},{{{},{},{h2},{},{},{h1},{-((3 h1)/4)-h2+(7 h3)/8}},{{-(h1/4)+h2+h3/8},{},{},{},{(5 h1)/4-h3/8},{-((3 h1)/4)-h2+(7 h3)/8},{}},{{},{},{},{-h1+h3/2},{},{},{(3 h1)/4+h3/8}},{{},{h2},{},{},{-(h1/4)-h2+(5 h3)/8},{},{}},{{(5 h1)/4-h3/8},{},{-(h1/4)-h2+(5 h3)/8},{},{},{-(h1/2)+h2+h3/4},{}},{{},{-((3 h1)/4)-h2+(7 h3)/8},{},{(3 h1)/4+h3/8},{},{},{-(h1/4)+h2+h3/8}},{{-((3 h1)/4)-h2+(7 h3)/8},{h1},{},{},{-(h1/2)+h2+h3/4},{},{}}},Phi[1,3,1]**Phi[3,4,1]**Phi[4,5,1]**Phi[5,1,1]+Phi[2,5,1]**Phi[5,6,1]**Phi[6,2,1]+Phi[2,6,1]**Phi[4,2,1]**Phi[6,4,1]+Phi[1,6,1]**Phi[6,7,1]**Phi[7,1,1]+Phi[1,7,1]**Phi[2,1,1]**Phi[7,2,1]+Phi[3,7,1]**Phi[5,3,1]**Phi[7,5,1],Phi[2,5,1]**Phi[3,4,1]**Phi[4,2,1]**Phi[5,3,1]+Phi[1,6,1]**Phi[2,1,1]**Phi[6,2,1]+Phi[4,5,1]**Phi[5,6,1]**Phi[6,4,1]+Phi[1,3,1]**Phi[3,7,1]**Phi[7,1,1]+Phi[2,6,1]**Phi[6,7,1]**Phi[7,2,1]+Phi[1,7,1]**Phi[5,1,1]**Phi[7,5,1],{0,1},{1,0}},
+{"PdP5a=Conifold/2x2",{{1,0},{1,1},{0,1},{-1,1},{-1,0},{-1,-1},{0,-1},{1,-1}},{{{},{},{h1},{-h1+h3/2},{},{},{},{}},{{},{},{-h1+h3/2},{h1},{},{},{},{}},{{},{},{},{},{h2},{-h2+h3/2},{},{}},{{},{},{},{},{-h2+h3/2},{h2},{},{}},{{},{},{},{},{},{},{-h1+h3/2},{h1}},{{},{},{},{},{},{},{h1},{-h1+h3/2}},{{-h2+h3/2},{h2},{},{},{},{},{},{}},{{h2},{-h2+h3/2},{},{},{},{},{},{}}},Phi[1,4,1]**Phi[4,6,1]**Phi[6,7,1]**Phi[7,1,1]+Phi[2,4,1]**Phi[4,5,1]**Phi[5,7,1]**Phi[7,2,1]+Phi[1,3,1]**Phi[3,6,1]**Phi[6,8,1]**Phi[8,1,1]+Phi[2,3,1]**Phi[3,5,1]**Phi[5,8,1]**Phi[8,2,1],Phi[1,3,1]**Phi[3,5,1]**Phi[5,7,1]**Phi[7,1,1]+Phi[2,3,1]**Phi[3,6,1]**Phi[6,7,1]**Phi[7,2,1]+Phi[1,4,1]**Phi[4,5,1]**Phi[5,8,1]**Phi[8,1,1]+Phi[2,4,1]**Phi[4,6,1]**Phi[6,8,1]**Phi[8,2,1],{0,1},{1,0}},
+{"PdP5b=L131/2",{{1,0},{0,1},{-1,2},{-1,1},{-1,0},{-1,-1},{0,-1},{1,-1},{1,0}},{{{},{},{},{h1},{},{},{h2},{-((4 h1)/5)-(4 h2)/5+(4 h3)/5}},{{},{},{-(h1/4)-(3 h2)/4+h3/2},{},{},{h1/20+(11 h2)/20+h3/5},{},{}},{{h1},{},{},{-((3 h1)/10)+(7 h2)/10+(3 h3)/10},{},{},{-((3 h1)/5)-(3 h2)/5+(3 h3)/5},{}},{{},{(11 h1)/20+h2/20+h3/5},{},{},{-(h1/4)-(3 h2)/4+h3/2},{},{},{-(h1/5)+(4 h2)/5+h3/5}},{{},{},{(11 h1)/20+h2/20+h3/5},{},{},{-((3 h1)/4)-h2/4+h3/2},{},{}},{{h2},{},{},{-((3 h1)/5)-(3 h2)/5+(3 h3)/5},{},{},{(7 h1)/10-(3 h2)/10+(3 h3)/10},{}},{{},{-((3 h1)/4)-h2/4+h3/2},{},{},{h1/20+(11 h2)/20+h3/5},{},{},{(4 h1)/5-h2/5+h3/5}},{{-((4 h1)/5)-(4 h2)/5+(4 h3)/5},{},{-(h1/5)+(4 h2)/5+h3/5},{},{},{(4 h1)/5-h2/5+h3/5},{},{}}},Phi[2,3,1]**Phi[3,4,1]**Phi[4,2,1]+Phi[1,4,1]**Phi[4,5,1]**Phi[5,6,1]**Phi[6,1,1]+Phi[2,6,1]**Phi[6,7,1]**Phi[7,2,1]+Phi[3,7,1]**Phi[5,3,1]**Phi[7,5,1]+Phi[1,7,1]**Phi[7,8,1]**Phi[8,1,1]+Phi[1,8,1]**Phi[3,1,1]**Phi[8,3,1]+Phi[4,8,1]**Phi[6,4,1]**Phi[8,6,1],Phi[3,4,1]**Phi[4,5,1]**Phi[5,3,1]+Phi[2,6,1]**Phi[4,2,1]**Phi[6,4,1]+Phi[1,7,1]**Phi[2,3,1]**Phi[3,1,1]**Phi[7,2,1]+Phi[5,6,1]**Phi[6,7,1]**Phi[7,5,1]+Phi[1,4,1]**Phi[4,8,1]**Phi[8,1,1]+Phi[3,7,1]**Phi[7,8,1]**Phi[8,3,1]+Phi[1,8,1]**Phi[6,1,1]**Phi[8,6,1],{0,1},{1,0}},
+{"PdP5c=C^3/4x2",{{1,0},{0,1},{-1,2},{-1,1},{-1,0},{-1,-1},{-1,-2},{0,-1}},{{{},{h1},{},{h2},{},{},{-h1-h2+h3},{}},{{h1},{},{h2},{},{},{},{},{-h1-h2+h3}},{{-h1-h2+h3},{},{},{h1},{},{h2},{},{}},{{},{-h1-h2+h3},{h1},{},{h2},{},{},{}},{{},{},{-h1-h2+h3},{},{},{h1},{},{h2}},{{},{},{},{-h1-h2+h3},{h1},{},{h2},{}},{{},{h2},{},{},{-h1-h2+h3},{},{},{h1}},{{h2},{},{},{},{},{-h1-h2+h3},{h1},{}}},Phi[2,3,1]**Phi[3,4,1]**Phi[4,2,1]+Phi[1,4,1]**Phi[3,1,1]**Phi[4,3,1]+Phi[4,5,1]**Phi[5,6,1]**Phi[6,4,1]+Phi[3,6,1]**Phi[5,3,1]**Phi[6,5,1]+Phi[1,7,1]**Phi[2,1,1]**Phi[7,2,1]+Phi[1,2,1]**Phi[2,8,1]**Phi[8,1,1]+Phi[6,7,1]**Phi[7,8,1]**Phi[8,6,1]+Phi[5,8,1]**Phi[7,5,1]**Phi[8,7,1],Phi[1,2,1]**Phi[2,3,1]**Phi[3,1,1]+Phi[1,4,1]**Phi[2,1,1]**Phi[4,2,1]+Phi[3,4,1]**Phi[4,5,1]**Phi[5,3,1]+Phi[3,6,1]**Phi[4,3,1]**Phi[6,4,1]+Phi[5,6,1]**Phi[6,7,1]**Phi[7,5,1]+Phi[1,7,1]**Phi[7,8,1]**Phi[8,1,1]+Phi[5,8,1]**Phi[6,5,1]**Phi[8,6,1]+Phi[2,8,1]**Phi[7,2,1]**Phi[8,7,1],{-(1/2),Sqrt[3]/2},{1,0}},
+{"PdP6=C^3/3x3",{{2,-1},{1,0},{0,1},{-1,2},{-1,1},{-1,0},{-1,-1},{0,-1},{1,-1}},{{{},{h1},{},{},{h2},{},{},{-h1-h2+h3},{}},{{},{},{-h1-h2+h3},{},{},{h1},{},{},{h2}},{{h2},{},{},{h1},{},{},{-h1-h2+h3},{},{}},{{},{h2},{},{},{-h1-h2+h3},{},{},{h1},{}},{{},{},{h2},{},{},{-h1-h2+h3},{},{},{h1}},{{h1},{},{},{-h1-h2+h3},{},{},{h2},{},{}},{{},{-h1-h2+h3},{},{},{h1},{},{},{h2},{}},{{},{},{h1},{},{},{h2},{},{},{-h1-h2+h3}},{{-h1-h2+h3},{},{},{h2},{},{},{h1},{},{}}},Phi[2,3,1]**Phi[3,4,1]**Phi[4,2,1]+Phi[1,5,1]**Phi[5,6,1]**Phi[6,1,1]+Phi[2,6,1]**Phi[6,7,1]**Phi[7,2,1]+Phi[3,7,1]**Phi[5,3,1]**Phi[7,5,1]+Phi[1,8,1]**Phi[3,1,1]**Phi[8,3,1]+Phi[4,8,1]**Phi[6,4,1]**Phi[8,6,1]+Phi[1,2,1]**Phi[2,9,1]**Phi[9,1,1]+Phi[4,5,1]**Phi[5,9,1]**Phi[9,4,1]+Phi[7,8,1]**Phi[8,9,1]**Phi[9,7,1],Phi[1,2,1]**Phi[2,3,1]**Phi[3,1,1]+Phi[3,4,1]**Phi[4,5,1]**Phi[5,3,1]+Phi[2,6,1]**Phi[4,2,1]**Phi[6,4,1]+Phi[5,6,1]**Phi[6,7,1]**Phi[7,5,1]+Phi[3,7,1]**Phi[7,8,1]**Phi[8,3,1]+Phi[1,8,1]**Phi[6,1,1]**Phi[8,6,1]+Phi[1,5,1]**Phi[5,9,1]**Phi[9,1,1]+Phi[4,8,1]**Phi[8,9,1]**Phi[9,4,1]+Phi[2,9,1]**Phi[7,2,1]**Phi[9,7,1],{-(1/2),Sqrt[3]/2},{1,0}},
+{"L152",{{-1,-1},{0,-1},{2,0},{0,1}},{{{},{h1,h2},{},{-((13 h1)/14)-h2+(27 h3)/28},{},{}},{{},{},{-(h1/7)+h2+h3/14,(6 h1)/7+h3/14},{},{},{-((4 h1)/7)-h2+(11 h3)/14}},{{-((6 h1)/7)-h2+(13 h3)/14},{},{},{h2,h1},{},{}},{{},{-((6 h1)/7)-h2+(13 h3)/14},{},{},{(4 h1)/7+(3 h3)/14},{(5 h1)/14+h2-(5 h3)/28}},{{(5 h1)/14+h2-(5 h3)/28},{},{-((4 h1)/7)-h2+(11 h3)/14},{},{},{}},{{(4 h1)/7+(3 h3)/14},{},{},{},{-((11 h1)/14)+(11 h3)/28},{}}},Phi[1,2,1]**Phi[2,3,1]**Phi[3,1,1]+Phi[2,3,2]**Phi[3,4,1]**Phi[4,2,1]+Phi[1,4,1]**Phi[4,5,1]**Phi[5,1,1]+Phi[1,2,2]**Phi[2,6,1]**Phi[6,1,1]+Phi[3,4,2]**Phi[4,6,1]**Phi[5,3,1]**Phi[6,5,1],Phi[1,2,2]**Phi[2,3,2]**Phi[3,1,1]+Phi[2,3,1]**Phi[3,4,2]**Phi[4,2,1]+Phi[3,4,1]**Phi[4,5,1]**Phi[5,3,1]+Phi[1,4,1]**Phi[4,6,1]**Phi[6,1,1]+Phi[1,2,1]**Phi[2,6,1]**Phi[5,1,1]**Phi[6,5,1],{-(1/2),Sqrt[3]/2},{1,0}},
+{"Y30",{{1,0},{0,2},{-1,1},{0,-1}},{{{},{h1,-h1+h3/2},{},{},{},{}},{{},{},{h2},{},{-h2+h3/2},{}},{{},{},{},{h1,-h1+h3/2},{},{}},{{-h2+h3/2},{},{},{},{h2},{}},{{},{},{},{},{},{h1,-h1+h3/2}},{{h2},{},{-h2+h3/2},{},{},{}}},Phi[1,2,1]**Phi[2,3,1]**Phi[3,4,2]**Phi[4,1,1]+Phi[1,2,2]**Phi[2,5,1]**Phi[5,6,1]**Phi[6,1,1]+Phi[3,4,1]**Phi[4,5,1]**Phi[5,6,2]**Phi[6,3,1],Phi[1,2,2]**Phi[2,3,1]**Phi[3,4,1]**Phi[4,1,1]+Phi[1,2,1]**Phi[2,5,1]**Phi[5,6,2]**Phi[6,1,1]+Phi[3,4,2]**Phi[4,5,1]**Phi[5,6,1]**Phi[6,3,1],{1,0},{0,1}},
+{"Y31",{{1,0},{0,2},{-1,0},{0,-1}},{{{},{h1,-h1-(3 h2)/5+(4 h3)/5},{},{},{h2},{}},{{},{},{-((8 h2)/5)+(4 h3)/5},{},{},{h2}},{{},{},{},{h1+(2 h2)/5-h3/5,-h1-h2/5+(3 h3)/5},{},{}},{{(9 h2)/5-(2 h3)/5},{},{},{},{-((8 h2)/5)+(4 h3)/5},{}},{{},{},{},{},{},{h1,-h1-(3 h2)/5+(4 h3)/5}},{{h1-(2 h2)/5+h3/5,-h1-h2+h3},{},{(9 h2)/5-(2 h3)/5},{},{},{}}},Phi[1,2,2]**Phi[2,3,1]**Phi[3,4,1]**Phi[4,1,1]+Phi[1,2,2]**Phi[2,6,1]**Phi[6,1,1]+Phi[1,5,1]**Phi[5,6,1]**Phi[6,1,2]+Phi[3,4,1]**Phi[4,5,1]**Phi[5,6,2]**Phi[6,3,1],Phi[1,2,1]**Phi[2,3,1]**Phi[3,4,2]**Phi[4,1,1]+Phi[1,5,1]**Phi[5,6,2]**Phi[6,1,1]+Phi[1,2,1]**Phi[2,6,1]**Phi[6,1,2]+Phi[3,4,2]**Phi[4,5,1]**Phi[5,6,1]**Phi[6,3,1],{1,0},{0,1}},
+{"Y32=L153",{{-1,0},{-1,-1},{0,-1},{2,2}},{{{},{h1,h2},{},{},{},{}},{{},{},{(7 h1)/4+(3 h2)/4-(3 h3)/8,(3 h1)/4+(7 h2)/4-(3 h3)/8},{},{-((15 h1)/4)-(15 h2)/4+(19 h3)/8},{}},{{-((7 h1)/4)-(7 h2)/4+(11 h3)/8},{},{},{(3 h1)/2+h2/2-h3/4,h1/2+(3 h2)/2-h3/4},{},{}},{{},{-((9 h1)/4)-(9 h2)/4+(13 h3)/8},{},{},{(7 h1)/4+(3 h2)/4-(3 h3)/8,(3 h1)/4+(7 h2)/4-(3 h3)/8},{}},{{},{},{-((9 h1)/4)-(9 h2)/4+(13 h3)/8},{},{},{h1,h2}},{{(11 h1)/4+(11 h2)/4-(11 h3)/8},{},{},{-((7 h1)/4)-(7 h2)/4+(11 h3)/8},{},{}}},Phi[1,2,1]**Phi[2,3,2]**Phi[3,1,1]+Phi[2,3,1]**Phi[3,4,2]**Phi[4,2,1]+Phi[3,4,1]**Phi[4,5,2]**Phi[5,3,1]+Phi[1,2,2]**Phi[2,5,1]**Phi[5,6,1]**Phi[6,1,1]+Phi[4,5,1]**Phi[5,6,2]**Phi[6,4,1],Phi[1,2,2]**Phi[2,3,1]**Phi[3,1,1]+Phi[2,3,2]**Phi[3,4,1]**Phi[4,2,1]+Phi[3,4,2]**Phi[4,5,1]**Phi[5,3,1]+Phi[1,2,1]**Phi[2,5,1]**Phi[5,6,2]**Phi[6,1,1]+Phi[4,5,2]**Phi[5,6,1]**Phi[6,4,1],{1/2,Sqrt[3]/2},{1,0}},
+{"C^3/(1,1,3)",{{-1,0},{0,-1},{2,2}},{{{},{h1,h2},{},{-h1-h2+h3},{}},{{},{},{h1,h2},{},{-h1-h2+h3}},{{-h1-h2+h3},{},{},{h1,h2},{}},{{},{-h1-h2+h3},{},{},{h1,h2}},{{h1,h2},{},{-h1-h2+h3},{},{}}},Phi[1,2,1]**Phi[2,3,2]**Phi[3,1,1]+Phi[2,3,1]**Phi[3,4,2]**Phi[4,2,1]+Phi[1,2,2]**Phi[2,5,1]**Phi[5,1,1]+Phi[1,4,1]**Phi[4,5,1]**Phi[5,1,2]+Phi[3,4,1]**Phi[4,5,2]**Phi[5,3,1],Phi[1,2,2]**Phi[2,3,1]**Phi[3,1,1]+Phi[2,3,2]**Phi[3,4,1]**Phi[4,2,1]+Phi[1,4,1]**Phi[4,5,2]**Phi[5,1,1]+Phi[1,2,1]**Phi[2,5,1]**Phi[5,1,2]+Phi[3,4,2]**Phi[4,5,1]**Phi[5,3,1],{-(1/2),Sqrt[3]/2},{1,0}},
+{"C^3/(1,1,4)",{{-1,0},{0,-1},{1,4}},{{{},{h1,h2},{},{},{-h1-h2+h3},{}},{{},{},{h1,h2},{},{},{-h1-h2+h3}},{{-h1-h2+h3},{},{},{h1,h2},{},{}},{{},{-h1-h2+h3},{},{},{h1,h2},{}},{{},{},{-h1-h2+h3},{},{},{h1,h2}},{{h1,h2},{},{},{-h1-h2+h3},{},{}}},Phi[1,2,1]**Phi[2,3,2]**Phi[3,1,1]+Phi[2,3,1]**Phi[3,4,2]**Phi[4,2,1]+Phi[3,4,1]**Phi[4,5,2]**Phi[5,3,1]+Phi[1,2,2]**Phi[2,6,1]**Phi[6,1,1]+Phi[1,5,1]**Phi[5,6,1]**Phi[6,1,2]+Phi[4,5,1]**Phi[5,6,2]**Phi[6,4,1],Phi[1,2,2]**Phi[2,3,1]**Phi[3,1,1]+Phi[2,3,2]**Phi[3,4,1]**Phi[4,2,1]+Phi[3,4,2]**Phi[4,5,1]**Phi[5,3,1]+Phi[1,5,1]**Phi[5,6,2]**Phi[6,1,1]+Phi[1,2,1]**Phi[2,6,1]**Phi[6,1,2]+Phi[4,5,2]**Phi[5,6,1]**Phi[6,4,1],{-(1/2),Sqrt[3]/2},{1,0}}
 };
 
 
