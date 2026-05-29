@@ -2335,22 +2335,22 @@ JKChiGenus
 (*Flow tree formula*)
 
 
-FlowTreeFormula[Mat_,Cvec_,Nvec_]:=OmAttbToOmAtt[DivisorSum[GCD@@Nvec,
-	MoebiusMu[#]/# (y-1/y)/(y^#-y^(-#)) FlowTreeFormulaRat[Mat,Cvec,Nvec/#,y^#]&]];
+FlowTreeFormula[Mat_,Cvec_,Nvec_]:=If[Plus@@Nvec==0,0,OmAttbToOmAtt[DivisorSum[GCD@@Nvec,
+MoebiusMu[#]/# (y-1/y)/(y^#-y^(-#)) FlowTreeFormulaRat[Mat,Cvec,Nvec/#,y^#]&]]];
 
 FlowTreeFormulaRat[Mat_,Cvec_,Nvec_,y_]:=Module[{QPoinca,Cvec0},
   If[Length[Union[{Length[Cvec],Length[Mat],Length[Nvec]}]]>1,      
  Print["FlowTreeFormula: Length of DSZ matrices, FI and dimension vectors do not match !"]];
   If[Max[Abs[Flatten[Mat+Transpose[Mat]]]]>$QuiverPrecision,
-		Print["FlowTreeFormulaRat: DSZ matrix is not antisymmetric !"]];
+Print["FlowTreeFormulaRat: DSZ matrix is not antisymmetric !"]];
   If[Max[Nvec]<0,Print["FlowTreeFormulaRat: The dimension vector must be positive !"]];
   If[Plus@@Nvec==0,Return[0]];
-  If[Plus@@Nvec==1,Return[1]];
+  If[Plus@@Nvec==1,Return[OmAttb[Nvec,y]]];
 Cvec0=Cvec-(Plus@@(Nvec Cvec))/(Plus@@Nvec);
-  If[(Abs[Plus@@(Nvec Cvec)]>$QuiverPrecision)&&$QuiverVerbose,       
-		Print["FlowTreeFormula: FI terms do not sum up to zero, shifting",Cvec," to ",Cvec0]] ;
-  If[$QuiverVerbose,PrintTemporary["FlowTreeFormulaRat: Evaluating tree indices..."]]; 
-  QPoinca=EvalTreeIndex[Mat,Cvec0,TreePoincarePolynomialRat[Nvec,y]] 
+  If[(Abs[Plus@@(Nvec Cvec)]>$QuiverPrecision)&&$QuiverVerbose,      
+Print["FlowTreeFormula: FI terms do not sum up to zero, shifting",Cvec," to ",Cvec0]] ;
+  If[$QuiverVerbose,PrintTemporary["FlowTreeFormulaRat: Evaluating tree indices..."]];
+  QPoinca=EvalTreeIndex[Mat,Cvec0,TreePoincarePolynomialRat[Nvec,y]]
 ];
 
 TreePoincarePolynomialRat[gam_,y_]:=Module[{JKListAllPart},
