@@ -406,6 +406,10 @@ JKIndexSplit::usage = "JKIndexSplit[ChargeMatrix_,Nvec_,Etavec_,SplitNodes_] com
 
 JKInitialize::usage = "JKInitialize[Mat_,RMat_,Cvec_,Nvec] initializes the internal variables "; 
 
+JKToricInitialize::usage = "JKToricInitialize[hMat_, fMat_, Cvec_, Nvec_] initializes the internal variables for a toric quiver. If Cvec only gives stability parameters for the quiver, the non-commutative chamber is automatically chosen ";
+
+UpdateJKList::usage = "UpdateJKList[Nvec_] updates the internal variable listing the u[i,j]";
+
 ZEuler::usage="ZEuler[ChargeMatrix,Nvec] computes the integrand in the residue formula for the index ";
  
 ZRational::usage= "ZRational[ChargeMatrix,Nvec] constructs the integrand in the residue formula for the chi_y genus in rational representation ";
@@ -522,6 +526,8 @@ SimplifyOmAttbasis::usage="SimplifyOmAttbasis[f_] replaces OmAtt[gam_,y_] by 1 i
 
 (* for Jeffrey-Kirwan residue formula *)
 ChargeMatrixFromQuiver::usage = "ChargeMatrixFromQuiver[Mat_,RMat_,Nvec_] constructs the charge matrix for a quiver with DSZ matrix Mat, R-charge matrix RMat, and dimension vector Nvec; do not forget to set JKFrozenCartan={{1,1}} to decouple the overall U(1)";
+
+ChargeMatrixFromToricQuiver::usage = "ChargeMatrixFromToricQuiver[hMat_, ffMat_, Nvec_] constructs the charge matrix for a toric quiver with height matrix hMat, framing matrix fMat, and dimension vector Nvec; do not forget to set JKFrozenCartan to decouple the overall U(1)";
 
 CompleteChargeMatrix::usage= "CompleteChargeMatrix[ChargeMatrix_,Nvec_] constructs the extended charge matrix consisting of chiral multiplets and vector multiplets ";
 
@@ -1928,6 +1934,64 @@ JKVertexCoordinates=Table[i->LiCoor[[i]],{i,Length[LiCoor]}];
 JKVertexLabels=Table[i->JKListuDisplay[[i]],{i,Length[LiCoor]}];
 ];
 
+JKToricInitialize[hMat_, fMat_, Cvec_, Nvec_, OptionalWeights_:{Sqrt[2],Sqrt[3]}] := 
+  With[{framed = 
+     If[fMat[[0]] === List, If[Length[Join@Join@fMat] > 0, True, False],
+       False]}, 
+   Module[{LiCoor}, 
+    JKFrozenCartan = 
+     If[framed, {{1, 
+        1}}, {{Min[MapIndexed[If[#1 > 0, #2[[1]], Infinity] &, Nvec]],
+         1}}];
+    (*construct a Mask with False on entries which are decoupled,
+    True otherwise*)
+    JKFrozenMask = 
+     Join[If[framed, {If[Length[Position[JKFrozenCartan, {1, 1}]] > 0,
+          False, True]}, {}], 
+      Flatten[Table[
+        Table[If[
+          Length[Position[
+             JKFrozenCartan, {If[framed, i + 1, i], j}]] > 0, False, 
+          True], {j, Nvec[[i]]}], {i, Length[Nvec]}]]];
+    (*construct list of Cartan variables for each node,
+    except decoupled ones*)
+    JKFrozenRuleEuler = 
+     Table[u[JKFrozenCartan[[i, 1]], JKFrozenCartan[[i, 2]]] -> 0, {i,
+        Length[JKFrozenCartan]}];
+    JKFrozenRuleRational = 
+     Table[u[JKFrozenCartan[[i, 1]], JKFrozenCartan[[i, 2]]] -> 1, {i,
+        Length[JKFrozenCartan]}];
+    (*u[i,ii] is the ii-th Cartan associated the i-th node*)
+    JKListuAll = 
+     Join[If[framed, {u[1, 1]}, {}], 
+      Flatten[Table[
+        u[If[framed, i + 1, i], ii], {i, Length[Nvec]}, {ii, Nvec[[i]]}]]];
+    JKListuDisplay = JKListuAll;
+    JKListu = Pick[JKListuAll, JKFrozenMask];
+    (*JKListut=JKListu/.{u[i_,j_]:>ut[i,j]};*)
+    JKListut = Table[ut[i], {i, Length[JKListu]}];
+    (*construct Charge Matrix*)
+    JKChargeMatrix = ChargeMatrixFromToricQuiver[hMat, fMat, Nvec,OptionalWeights];
+    (*Construct perturbed stability vector*)
+    JKEta = Join[
+       If[framed, {If[Length[Cvec] == Length[Nvec], -Total[Cvec*Nvec],
+           Cvec[[1]]]}, {}], 
+       Flatten[Table[
+         Table[If[Length[Cvec] == Length[Nvec], Cvec[[i]], 
+           Cvec[[i + 1]]], {j, Nvec[[i]]}], {i, Length[Nvec]}]]] + 
+      1/1000/$QuiverPerturb2 Sort[
+        Table[Random[Integer, {1, 1000}], {i, 
+          Plus @@ Join[If[framed, {1}, {}], Nvec]}]];
+    LiCoor = 
+     Join[If[framed, {{0, 0}}, {}], 
+      Flatten[Table[{i, (Nvec[[i]] - j)*(1 - i/Length[Nvec]/4)}, {i, 
+         Length[Nvec]}, {j, Nvec[[i]]}], 1]];
+    JKVertexCoordinates = Table[i -> LiCoor[[i]], {i, Length[LiCoor]}];
+    JKVertexLabels = 
+     Table[i -> JKListuDisplay[[i]], {i, Length[LiCoor]}];
+]];
+
+UpdateJKList[Nvec_]:=JKListuAll=Flatten[Table[u[i, ii], {i, Length[Nvec]}, {ii, Nvec[[i]]}]];
 
 ZEuler[ChargeMatrix_,Nvec_]:= (UpdateJKList[Nvec];1/Product[Nvec[[i]]!,{i,Length[Nvec]}]Product[If[ii==jj,1,-(u[i,ii]-u[i,jj])/ (u[i,ii]-u[i,jj]-1 )],{i,Length[Nvec]},{ii,Nvec[[i]]},{jj,Nvec[[i]]}]Product[(-((Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1)))/((Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)))^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]);
 
@@ -2001,6 +2065,34 @@ Sign[Det[StableFlag[[4]]]] gt];
 ChargeMatrixFromQuiver[Mat_,RMat_,Nvec_]:=Select[Flatten[ 
 Table[If[Mat[[i,j]]>0,If[Length[RMat[[i,j]]]==0,Flatten[Table[Flatten[{LegCharge[Nvec,{i,ii},{j,jj}],RMat[[i,j]],Mat[[i,j]]}],{ii,Nvec[[i]]},{jj,Nvec[[j]]}],1],
 Flatten[Table[Flatten[{LegCharge[Nvec,{i,ii},{j,jj}],RMat[[i,j,k]],1}],{ii,Nvec[[i]]},{jj,Nvec[[j]]},{k,Mat[[i,j]]}],2]],{}],{i,Length[Mat]},{j,Length[Mat]}] ,2],Length[#]>0&];
+
+ChargeMatrixFromToricQuiver[hhMat_, ffMat_, Nvec_, OptionalWeights_:{Sqrt[2],Sqrt[3]}] :=
+  With[{hMat=hhMat /. {h1 -> OptionalWeights[[1]], h2 -> OptionalWeights[[2]], h3 -> 2}},
+  {fMat = If[ffMat[[0]] === List, 
+      ffMat, {Array[{} &, Length[hMat]], Array[{} &, Length[hMat]]}]},
+   With[{fCharges = Select[Join[
+        Flatten[
+         Table[If[Length[fMat[[1, i]]] == 0, {}, 
+           Table[Flatten[
+             Join[{-1}, {LegCharge[Nvec, {i, ii}, {0, 0}], w, 
+               1}]], {ii, Nvec[[i]]}, {w, fMat[[1, i]]}]], {i, 
+           Length[hMat]}], 2],
+        Flatten[
+         Table[If[Length[fMat[[2, i]]] == 0, {}, 
+           Table[Flatten[
+             Join[{1}, {LegCharge[Nvec, {0, 0}, {i, ii}], w, 
+               1}]], {ii, Nvec[[i]]}, {w, fMat[[2, i]]}]], {i, 
+           Length[hMat]}], 2]
+        ], Length[#] > 0 &]},
+    Join[fCharges, 
+     Select[Flatten[
+       Table[If[Length[hMat[[i, j]]] > 0, 
+         Flatten[Table[
+           Flatten[Join[
+             If[Length[fCharges] > 0, {0}, {}], {LegCharge[
+               Nvec, {j, jj}, {i, ii}], w, 1}]], {ii, Nvec[[i]]}, {jj,
+             Nvec[[j]]}, {w, hMat[[i, j]]}], 2], {}], {i, 
+         Length[hMat]}, {j, Length[hMat]}], 2], Length[#] > 0 &]]]];
 
 CompleteChargeMatrix[ChargeMatrix_,Nvec_]:= Select[Flatten[
 {{ChargeMatrix},Flatten[Table[Map[Flatten,{{LegCharge[Nvec,{i,ii},{i,jj}],-2,1},{LegCharge[Nvec,{i,jj},{i,ii}],-2,1}}],{i,Length[Nvec]},{ii,Nvec[[i]]},{jj,ii+1,Nvec[[i]]}],2]},2],Length[#]>0&];
