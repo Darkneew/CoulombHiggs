@@ -135,11 +135,14 @@
  * - Replaced the angle argument by a weight argument in CrystalWeight and DirectedSign
  * - Potential terms Wp and Wm are now non-commutative
  * - Added various safeguards and error messages for quiver routines 
- 
- 
- 
+ *
+ * Release notes for 7.1:
+ * - Fixed FlowTreeFormula, FlowTreeFormulaRat
+ * - Added ChargeMatrixFromToricQuiver, JKToricInitialize, UpdateJKList
+ * - Adjusted JKIndex to simplify expressions
+ * 
  *********************************************************************)
-Print["CoulombHiggs 7.0 - A package for evaluating quiver invariants"];
+Print["CoulombHiggs 7.1 - A package for evaluating quiver invariants"];
 
 
 BeginPackage["IndexVars`"];
