@@ -2236,7 +2236,7 @@ If[$QuiverVerbose,
 Integrand=ZEuler[ChargeMatrix,Nvec];
 PrintTemporary["Evaluating JK residue at flag ",Dynamic[j]];
 JKEuler=Table[
-JKResidueTrig[ListStableFlags[[j]],Integrand],{j,Length[ListStableFlags]}];
+FullSimplify[JKResidueTrig[ListStableFlags[[j]],Integrand]],{j,Length[ListStableFlags]}];
 If[$QuiverVerbose,Print["Euler = ",JKEuler," = ",Plus@@Flatten[JKEuler]]];
 JKRelevantStableFlags=Select[Table[If[JKEuler[[i]]=!=0,ListStableFlags[[i]],{}],{i,Length[ListStableFlags]}],Length[#]>0&];
 Print["From computing the Euler number, ",Length[JKRelevantStableFlags],
@@ -2254,7 +2254,7 @@ If[$QuiverTrig==True,
   JKChiGenus=Table[
   JKResidueRational[JKRelevantStableFlags[[j]],Integrand],{j,Length[JKRelevantStableFlags]}];
   ],JKChiGenus=Select[JKEuler,#=!=0&];];
-If[$QuiverVerbose,Print["Chi-genus = ",JKChiGenus," =",Plus@@Flatten[JKChiGenus]]];
+If[$QuiverVerbose,Print["Chi-genus = ",JKChiGenus," =",FullSimplify[Plus@@Flatten[JKChiGenus]]]];
 JKChiGenus
 ];
 
