@@ -1928,22 +1928,23 @@ JKVertexCoordinates=Table[i->LiCoor[[i]],{i,Length[LiCoor]}];
 JKVertexLabels=Table[i->JKListuDisplay[[i]],{i,Length[LiCoor]}];
 ];
 
-ZEuler[ChargeMatrix_,Nvec_]:= 1/Product[Nvec[[i]]!,{i,Length[Nvec]}]Product[If[ii==jj,1,-(u[i,ii]-u[i,jj])/ (u[i,ii]-u[i,jj]-1 )],{i,Length[Nvec]},{ii,Nvec[[i]]},{jj,Nvec[[i]]}]Product[(-((Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1)))/((Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)))^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}];
 
-ZRational[ChargeMatrix_,Nvec_]:=1/Product[Nvec[[i]]!,{i,Length[Nvec]}]/Product[u[i,ii],{i,Length[Nvec]},{ii,Nvec[[i]]}]Factor[Product[If[ii==jj,1,(-y(u[i,ii]-u[i,jj])/(u[i,ii]-y^2 u[i,jj]))],{i,Length[Nvec]},{ii,Nvec[[i]]},{jj,Nvec[[i]]}]Product[(-1/y(Times@@(JKListuAll^(Drop[ChargeMatrix[[i]],-2])) - y^(2-ChargeMatrix[[i,-2]]))/(Times@@(JKListuAll^(Drop[ChargeMatrix[[i]],-2])) -y^(-ChargeMatrix[[i,-2]])))^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]]/(y-1/y)^(Plus@@Nvec-Length[JKFrozenCartan]); 
+ZEuler[ChargeMatrix_,Nvec_]:= (UpdateJKList[Nvec];1/Product[Nvec[[i]]!,{i,Length[Nvec]}]Product[If[ii==jj,1,-(u[i,ii]-u[i,jj])/ (u[i,ii]-u[i,jj]-1 )],{i,Length[Nvec]},{ii,Nvec[[i]]},{jj,Nvec[[i]]}]Product[(-((Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1)))/((Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)))^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]);
 
-ZTrig[ChargeMatrix_,Nvec_]:= (2Pi I z)^(Plus@@Nvec-Length[JKFrozenCartan])/Product[Nvec[[i]]!,{i,Length[Nvec]}]Product[If[ii==jj,1,(-(Exp[Pi I z(u[i,ii]-u[i,jj])]-Exp[-Pi I z(u[i,ii]-u[i,jj])])/(Exp[Pi I z(u[i,ii]-u[i,jj]-1 )]-Exp[-Pi I z(u[i,ii]-u[i,jj]-1)]))],{i,Length[Nvec]},{ii,Nvec[[i]]},{jj,Nvec[[i]]}]Product[(-((Exp[Pi I z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1))]-Exp[-Pi I z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1))])/((Exp[Pi I z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)]-Exp[-Pi I z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)]))))^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]/(Exp[Pi I z]-Exp[-Pi I z])^(Plus@@Nvec-Length[JKFrozenCartan]);
+ZRational[ChargeMatrix_,Nvec_]:=(UpdateJKList[Nvec];1/Product[Nvec[[i]]!,{i,Length[Nvec]}]/Product[u[i,ii],{i,Length[Nvec]},{ii,Nvec[[i]]}]Factor[Product[If[ii==jj,1,(-y(u[i,ii]-u[i,jj])/(u[i,ii]-y^2 u[i,jj]))],{i,Length[Nvec]},{ii,Nvec[[i]]},{jj,Nvec[[i]]}]Product[(-1/y(Times@@(JKListuAll^(Drop[ChargeMatrix[[i]],-2])) - y^(2-ChargeMatrix[[i,-2]]))/(Times@@(JKListuAll^(Drop[ChargeMatrix[[i]],-2])) -y^(-ChargeMatrix[[i,-2]])))^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]]/(y-1/y)^(Plus@@Nvec-Length[JKFrozenCartan])); 
 
-ZElliptic[ChargeMatrix_,Nvec_]:= Module[{},(2Pi Eta^3 z/Theta[z])^(Plus@@Nvec-Length[JKFrozenCartan])/Product[Nvec[[i]]!,{i,Length[Nvec]}]Product[If[ii==jj,1,-Theta[z(u[i,ii]-u[i,jj])]/Theta[z(u[i,ii]-u[i,jj]-1)]
+ZTrig[ChargeMatrix_,Nvec_]:= (UpdateJKList[Nvec];(2Pi I z)^(Plus@@Nvec-Length[JKFrozenCartan])/Product[Nvec[[i]]!,{i,Length[Nvec]}]Product[If[ii==jj,1,(-(Exp[Pi I z(u[i,ii]-u[i,jj])]-Exp[-Pi I z(u[i,ii]-u[i,jj])])/(Exp[Pi I z(u[i,ii]-u[i,jj]-1 )]-Exp[-Pi I z(u[i,ii]-u[i,jj]-1)]))],{i,Length[Nvec]},{ii,Nvec[[i]]},{jj,Nvec[[i]]}]Product[(-((Exp[Pi I z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1))]-Exp[-Pi I z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1))])/((Exp[Pi I z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)]-Exp[-Pi I z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)]))))^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]/(Exp[Pi I z]-Exp[-Pi I z])^(Plus@@Nvec-Length[JKFrozenCartan]));
+
+ZElliptic[ChargeMatrix_,Nvec_]:= (UpdateJKList[Nvec];(2Pi Eta^3 z/Theta[z])^(Plus@@Nvec-Length[JKFrozenCartan])/Product[Nvec[[i]]!,{i,Length[Nvec]}]Product[If[ii==jj,1,-Theta[z(u[i,ii]-u[i,jj])]/Theta[z(u[i,ii]-u[i,jj]-1)]
 ],{i,Length[Nvec]},{ii,Nvec[[i]]},{jj,Nvec[[i]]}]Product[
-(- Theta[z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1))]/Theta[z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)])^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]];
+(- Theta[z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1))]/Theta[z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)])^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]);
 
-ZEulerPartial[ChargeMatrix_,Nvec_,ListPerm_]:= Product[ 
+ZEulerPartial[ChargeMatrix_,Nvec_,ListPerm_]:= (UpdateJKList[Nvec];Product[ 
 If[Length[ListPerm[[i]]]>0,
 (* for split nodes *) 
 Signature[ListPerm[[i]]]/Product[(u[i,ii]-u[i,ListPerm[[i,ii]]]+1),{ii,Nvec[[i]]}]
 ,(* for unsplit nodes *)
-Product[If[ii==jj,1,-(u[i,ii]-u[i,jj])/ (u[i,ii]-u[i,jj]-1 )],{ii,Nvec[[i]]},{jj,Nvec[[i]]}]]/(Nvec[[i]]!),{i,Length[ListPerm]}]Product[(-((Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1)))/((Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)))^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}] ;
+Product[If[ii==jj,1,-(u[i,ii]-u[i,jj])/ (u[i,ii]-u[i,jj]-1 )],{ii,Nvec[[i]]},{jj,Nvec[[i]]}]]/(Nvec[[i]]!),{i,Length[ListPerm]}]Product[(-((Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1)))/((Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)))^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]) ;
 
 ZRationalPartial[ChargeMatrix_,Nvec_,ListPerm_]:=Factor[Product[
 If[Length[ListPerm[[i]]]>0,
@@ -1954,14 +1955,14 @@ Product[u[i,ii]-y^2 u[i,ListPerm[[i,ii]]],{ii,Nvec[[i]]}],
 1/Product[u[i,ii],{ii,Nvec[[i]]}]Product[If[ii==jj,1,(-y(u[i,ii]-u[i,jj])/(u[i,ii]-y^2 u[i,jj]))],{ii,Nvec[[i]]},{jj,Nvec[[i]]}]
 ]1/(Nvec[[i]]!),{i,Length[ListPerm]}]Product[(-1/y(Times@@(JKListuAll^(Drop[ChargeMatrix[[i]],-2])) - y^(2-ChargeMatrix[[i,-2]]))/(Times@@(JKListuAll^(Drop[ChargeMatrix[[i]],-2])) -y^(-ChargeMatrix[[i,-2]])))^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]/(y-1/y)^(Plus@@Nvec-Length[JKFrozenCartan])]; 
 
-ZTrigPartial[ChargeMatrix_,Nvec_,ListPerm_]:=Module[{},(2Pi I z)^(Plus@@Nvec-Length[JKFrozenCartan])Product[
+ZTrigPartial[ChargeMatrix_,Nvec_,ListPerm_]:=(UpdateJKList[Nvec];(2Pi I z)^(Plus@@Nvec-Length[JKFrozenCartan])Product[
 If[Length[ListPerm[[i]]]>0,
 (* for split nodes *) 
 (-(Exp[I Pi z]-Exp[-I Pi z])/2/I)^Length[ListPerm[[i]]]Signature[ListPerm[[i]]]Product[2I/(Exp[Pi I z(u[i,ii]-u[i,ListPerm[[i,ii]]]-1)]-Exp[-Pi I z(u[i,ii]-u[i,ListPerm[[i,ii]]]-1)]),{ii,Length[ListPerm[[i]]]}],
 Product[If[ii==jj,1,(-(Exp[Pi I z(u[i,ii]-u[i,jj])]-Exp[-Pi I z(u[i,ii]-u[i,jj])])/(Exp[Pi I z(u[i,ii]-u[i,jj]-1 )]-Exp[-Pi I z(u[i,ii]-u[i,jj]-1)]))],{i,Length[Nvec]},{ii,Nvec[[i]]},{jj,Nvec[[i]]}]
-]/Nvec[[i]]!,{i,Length[Nvec]}]Product[(-((Exp[Pi I z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1))]-Exp[-Pi I z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1))])/((Exp[Pi I z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)]-Exp[-Pi I z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)]))))^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]/(Exp[Pi I z]-Exp[-Pi I z])^(Plus@@Nvec-Length[JKFrozenCartan])];
+]/Nvec[[i]]!,{i,Length[Nvec]}]Product[(-((Exp[Pi I z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1))]-Exp[-Pi I z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1))])/((Exp[Pi I z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)]-Exp[-Pi I z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)]))))^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]/(Exp[Pi I z]-Exp[-Pi I z])^(Plus@@Nvec-Length[JKFrozenCartan]));
 
-ZEllipticPartial[ChargeMatrix_,Nvec_,ListPerm_]:=Module[{},(2Pi Eta^3 z/Theta[z])^(Plus@@Nvec-Length[JKFrozenCartan])
+ZEllipticPartial[ChargeMatrix_,Nvec_,ListPerm_]:=(UpdateJKList[Nvec];(2Pi Eta^3 z/Theta[z])^(Plus@@Nvec-Length[JKFrozenCartan])
    Product[If[Length[ListPerm[[i]]]>0,
 (* for split nodes *)
 (-Theta[z]/2)^Nvec[[i]]   Signature[ListPerm[[i]]]
@@ -1971,7 +1972,7 @@ Product[If[ii==jj,1,-Theta[z(u[i,ii]-u[i,jj])]/Theta[z(u[i,ii]-u[i,jj]-1)]],{ii,
 ]/Nvec[[i]]!,{i,Length[Nvec]}]  
 Product[
 (-Theta[z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1))]/Theta[z (Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)])^ChargeMatrix[[i,-1]]
-     ,{i,Length[ChargeMatrix]}]];
+     ,{i,Length[ChargeMatrix]}]);
      
 JKResidueRational[StableFlag_,ZRational_]:=Module[{Inter,QT,QTi,Ksign,QTu,QTut,repu,gt,i,j},
 (* StableFlag is a list  {inter,{hyperplanes},QT,Kab} *)
@@ -1986,16 +1987,15 @@ gt=Factor[(ZRational/.repu) ((Product[JKListu[[i]],{i,Length[JKListu]}]/.repu)/P
 gt=ResidueFast[gt,{JKListut[[i]],1}],{i,Length[JKListut]}];
  Ksign  gt];
 
-JKResidueTrig[StableFlag_,ZTrig_]:=Module[{Inter,QT,QTi,Ksign,repu,gt,i,j}, 
-Inter=StableFlag[[1]]; 
-  QT=StableFlag[[3]]; QTi=Inverse[QT];
-  Ksign=Sign[Det[StableFlag[[4]]]];
-repu=Table[JKListu[[i]]->(Inverse[QT] . JKListut+Inter)[[i]],{i,Length[JKListu]}];
+JKResidueTrig[StableFlag_,ZTrig_]:=Module[{QT,repu,gt,i,j}, 
+Print[StableFlag,ZTrig];
+QT=StableFlag[[3]];
+repu=Table[JKListu[[i]]->(Inverse[QT] . JKListut+StableFlag[[1]])[[i]],{i,Length[JKListu]}];
 gt=(ZTrig/.repu)/Det[QT] /.JKFrozenRuleEuler;
 If[$QuiverVerbose,PrintTemporary["JKResidueTrig: Step ",Dynamic[i],"/",Length[JKListut]]];
 Do[
 gt=ResidueFast[gt,{JKListut[[i]], 0}],{i,Length[JKListut]}];
- Ksign  gt];
+Sign[Det[StableFlag[[4]]]] gt];
 
 (* one multiplicity-1 hyperplane for each chiral multiplet; RMat[[i,j]] is now a vector *)
 ChargeMatrixFromQuiver[Mat_,RMat_,Nvec_]:=Select[Flatten[ 
@@ -2105,7 +2105,7 @@ ListSings=Table[{ListInterDistinct[[i]],CollectHyperplanes[ListInterrplets,ListI
 ];
 
 FindStableFlags[Inter_,ListHyper_,Nvec_,Etavec_]:=
-(* produce list of inter, hyperplanes, F, kappa matrices *)Module[{ListSubsets,ListFlags,ListDistinctFlags,ListStableFlags,ListCharges,QT,KTab},
+(* produce list of inter, hyperplanes, F, kappa matrices *)Module[{ListSubsets,ListFlags,ListStableFlags,ListCharges,QT,KTab},
 ListCharges=TrimChargeTable[ListHyper];
 (* produce the list of unordered r-tuplets *)ListSubsets=Subsets[ListHyper,{Plus@@Nvec-Length[JKFrozenCartan]}];
      ListStableFlags=
@@ -2121,8 +2121,7 @@ If[Det[KTab]!=0,
 {Inter,ListFlags[[j]],QT,KTab},{}],{}],
 {j,Length[ListFlags]}], Length[#]>0&]],
 {k,Length[ListSubsets]}],1], Length[#]>0&];
-ListDistinctFlags=DeleteDuplicates[ListStableFlags,SameFlagQ[#1[[3]],#2[[3]]]&];
-ListDistinctFlags
+DeleteDuplicates[ListStableFlags,SameFlagQ[#1[[3]],#2[[3]]]&]
 ];
 
 TestStableFlag[ListHyper_,Flag_,Etavec_]:=Module[{QT,ListCharges,KTab},
@@ -2216,7 +2215,6 @@ If[Min[Last[Transpose[ChargeMatrix]]]<1,Print["The last column of the charge mat
 ];
 If[Min[Nvec]<0,Print["The dimension vector should be a vector of positive integers !"];
 ];
-(*JKInitialize[Nvec,JKFrozenCartan]; *)
 ChargeNumMatrix=Table[MapAt[#-2&,ChargeMatrix[[i]],Length[Etavec]+1],{i,Length[ChargeMatrix]}];
 If[$QuiverNoVM,
   ListSings=FindSingularities[ChargeMatrix],
@@ -3464,7 +3462,7 @@ EqW=Table[Plus@@List@@WL[[i]]==h3,{i,Length[WL]}];
 (* vertex constraint *)
 EqV=Table[Sum[Sum[Phi[i,j,k],{k,Mat[[i,j]]}]-Sum[Phi[j,i,k],{k,Mat[[j,i]]}],{j,NumberVertices}]==0,{i,NumberVertices}];
 so=Solve[Flatten[{EqW,EqV,Phi[i1,j1,k1]==h1,Phi[i2,j2,k2]==h2}]][[1]];
-Table[Table[Phi[i,j,k],{k,Mat[[i,j]]}],{i,NumberVertices},{j,NumberVertices}]/.so]
+Table[Table[Phi[i,j,k],{k,Mat[[i,j]]}],{i,NumberVertices},{j,NumberVertices}]/.so];
 
 QuiverMultiplierMat[i_,j_]:=If[Depth[$QuiverMultiplier]==1,$QuiverMultiplier,$QuiverMultiplier[[i,j]]];
 
