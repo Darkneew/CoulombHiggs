@@ -1946,14 +1946,14 @@ Signature[ListPerm[[i]]]/Product[(u[i,ii]-u[i,ListPerm[[i,ii]]]+1),{ii,Nvec[[i]]
 ,(* for unsplit nodes *)
 Product[If[ii==jj,1,-(u[i,ii]-u[i,jj])/ (u[i,ii]-u[i,jj]-1 )],{ii,Nvec[[i]]},{jj,Nvec[[i]]}]]/(Nvec[[i]]!),{i,Length[ListPerm]}]Product[(-((Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1)))/((Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)))^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]) ;
 
-ZRationalPartial[ChargeMatrix_,Nvec_,ListPerm_]:=Factor[Product[
+ZRationalPartial[ChargeMatrix_,Nvec_,ListPerm_]:=(UpdateJKList[Nvec];Factor[Product[
 If[Length[ListPerm[[i]]]>0,
 (* for split nodes *) 
  (1-y^2)^Length[ListPerm[[i]]] Signature[ListPerm[[i]]]/
 Product[u[i,ii]-y^2 u[i,ListPerm[[i,ii]]],{ii,Nvec[[i]]}],
 (* for unsplit nodes *) 
 1/Product[u[i,ii],{ii,Nvec[[i]]}]Product[If[ii==jj,1,(-y(u[i,ii]-u[i,jj])/(u[i,ii]-y^2 u[i,jj]))],{ii,Nvec[[i]]},{jj,Nvec[[i]]}]
-]1/(Nvec[[i]]!),{i,Length[ListPerm]}]Product[(-1/y(Times@@(JKListuAll^(Drop[ChargeMatrix[[i]],-2])) - y^(2-ChargeMatrix[[i,-2]]))/(Times@@(JKListuAll^(Drop[ChargeMatrix[[i]],-2])) -y^(-ChargeMatrix[[i,-2]])))^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]/(y-1/y)^(Plus@@Nvec-Length[JKFrozenCartan])]; 
+]1/(Nvec[[i]]!),{i,Length[ListPerm]}]Product[(-1/y(Times@@(JKListuAll^(Drop[ChargeMatrix[[i]],-2])) - y^(2-ChargeMatrix[[i,-2]]))/(Times@@(JKListuAll^(Drop[ChargeMatrix[[i]],-2])) -y^(-ChargeMatrix[[i,-2]])))^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]/(y-1/y)^(Plus@@Nvec-Length[JKFrozenCartan])]); 
 
 ZTrigPartial[ChargeMatrix_,Nvec_,ListPerm_]:=(UpdateJKList[Nvec];(2Pi I z)^(Plus@@Nvec-Length[JKFrozenCartan])Product[
 If[Length[ListPerm[[i]]]>0,
