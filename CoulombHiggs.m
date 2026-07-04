@@ -140,6 +140,7 @@
  * - Fixed FlowTreeFormula, FlowTreeFormulaRat
  * - Added ChargeMatrixFromToricQuiver, JKToricInitialize, UpdateJKList
  * - Adjusted JKIndex to simplify expressions
+ * - Added FramedHeightMatrix, ZEulerFromQuiver, ZRatFromQuiver
  * 
  *********************************************************************)
 Print["CoulombHiggs 7.1 - A package for evaluating quiver invariants"];
@@ -421,6 +422,10 @@ ZTrig::usage= "ZTrig[ChargeMatrix,Nvec] constructs the integrand in the residue 
 
 ZElliptic::usage= "ZElliptic[ChargeMatrix,Nvec] constructs the integrand in the residue formula for the elliptic genus ";
 
+ZEulerFromQuiver::usage="ZEulerFromQuiver[hMat, Potential, Nvec] constructs the integrand in the residue formula for the index, for a quiver with height matrix hMat, dimension vector Nvec, and where Potential is either the potential's degree or directly a monomial or the full potential";
+
+ZRatFromQuiver::usage="ZRatFromQuiver[hMat, Potential, Nvec] constructs the integrand in the residue formula for the chi_y genus in rational representation, for a quiver with height matrix hMat, dimension vector Nvec, and where Potential is either the potential's degree or directly a monomial or the full potential";
+
 ZEulerPartial::usage="ZEulerPartial[ChargeMatrix,Nvec,ListPerm] constructs the partial contribution to the integrand in the residue formula for the index, corresponding to the partitions Listperm at each node; the sum over all permutations reproduces ZEuler[ChargeMatrix,Nvec]";
 
 ZRationalPartial::usage= "ZRationalPartial[ChargeMatrix_,Nvec_,ListPerm_] constructs the partial contribution to the integrand in the residue formula for the chi_y genus in rational representation, corresponding to the partitions Listperm at each node; ; the sum over all permutations reproduces ZRational[ChargeMatrix,Nvec]";
@@ -608,6 +613,8 @@ UnrefinedSeriesFromCrystal::usage="UnrefinedSeriesFromCrystal[hMat_,fMat_,Nn_] c
 D4FramedNCDTSeries::usage="D4FramedNCDTSeries[hMat_,Wp_,Wm_,i_,j_,k_,Nn_] constructs the generating function of refined NCDT invariants with a D4 framing for dimension vectors up to Nn, for the quiver with height matrix hMat and potential Wp-Wm, with the D4 framing associated to the arrow Phi[i,j,k]. If this arrow does not correspond to any non-compact 4-cycle, an error will pop-up.";
 
 D6FramedNCDTSeries::usage="D6FramedNCDTSeries[hMat_,Wp_,Wm_,i_,Nn_,weight_,maxWeightIter_] constructs the generating function of refined NCDT invariants with a D6 framing in node i for dimension vectors up to Nn, for the quiver with height matrix hMat and potential Wp-Wm. If no weight is specificed, a default weight will be used. The algorithm will check wether the weight is valid or not up to order maxWeightIter, which is set to 4 by default.";
+
+FramedHeightMatrix::usage="FramedHeightMatrix[hMat_] constructs the height matrix of the quiver described by hMat with an additional framing node in position 1. No arrow is added from the framing node to the original quiver.";
 
 D6Framing::usage="D6Framing[hMat_,i_] constructs the framing data fMat for a D6-brane associated to node i";
 
@@ -2006,6 +2013,61 @@ ZElliptic[ChargeMatrix_,Nvec_]:= (UpdateJKList[Nvec];(2Pi Eta^3 z/Theta[z])^(Plu
 ],{i,Length[Nvec]},{ii,Nvec[[i]]},{jj,Nvec[[i]]}]Product[
 (- Theta[z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1))]/Theta[z(Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)])^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]);
 
+ZEulerFromQuiver[hMat_, Potential_, Ndim_] := With[
+   {d = If[Or[Potential[[0]] === Integer, Potential[[0]] === Symbol], 
+      Potential, 
+      If[Or[Potential[[0]] === Times, 
+        Potential[[0]] === NonCommutativeMultiply], 
+       Total[Part @@ (Join[{hMat}, List @@ #]) & /@ List @@ Potential],
+        Total[Part @@ (Join[{hMat}, List @@ #]) & /@ 
+         List @@ Potential[[1]]]]]},
+   (1/d)^(Total[Ndim] - 1) 
+    Times @@ 
+     Flatten[Array[
+       n |-> Array[
+         i |-> Array[
+           j |-> If[i == j, 
+             1, (u[n, j] - u[n, i])/(d + u[n, i] - u[n, j])], Ndim[[n]]],
+          Ndim[[n]]], Length[Ndim]]] Times @@ 
+     Flatten[Array[
+       a |-> Array[
+         b |-> Array[
+           n |-> Array[
+             t |-> Array[
+               h |-> (d - hMat[[a, b, n]] + u[a, t] - 
+                   u[b, h])/(hMat[[a, b, n]] + u[b, h] - u[a, t]), 
+               Ndim[[b]]], Ndim[[a]]], Length[hMat[[a, b]]]], 
+         Length[hMat]], Length[hMat]]]
+];
+
+ZRatFromQuiver[hMat_, Potential_, Ndim_] := With[
+   {d = If[Or[Potential[[0]] === Integer, Potential[[0]] === Symbol], 
+      Potential, 
+      If[Or[Potential[[0]] === Times, 
+        Potential[[0]] === NonCommutativeMultiply], 
+       Total[Part @@ (Join[{hMat}, List @@ #]) & /@ List @@ Potential],
+        Total[Part @@ (Join[{hMat}, List @@ #]) & /@ 
+         List @@ Potential[[1]]]]]},
+   (1/(y^d - y^(-d)))^(Total[Ndim] - 1) 
+    Times @@ 
+     Flatten[Array[
+       n |-> Array[
+         i |-> Array[
+           j |-> If[i == j, 
+             1, (v[n, j] - v[n, i])/(y^d v[n, i] - y^(-d) v[n, j])], 
+           Ndim[[n]]], Ndim[[n]]], Length[Ndim]]] Times @@ 
+     Flatten[Array[
+       a |-> Array[
+         b |-> Array[
+           n |-> Array[
+             t |-> Array[
+               h |-> (y^(d - 2 hMat[[a, b, n]]) v[a, t] - 
+                   v[b, h] y^(-d))/(v[b, h] - 
+                   v[a, t] y^(-2 hMat[[a, b, n]])), Ndim[[b]]], 
+             Ndim[[a]]], Length[hMat[[a, b]]]], Length[hMat]], 
+       Length[hMat]]]
+];
+
 ZEulerPartial[ChargeMatrix_,Nvec_,ListPerm_]:= (UpdateJKList[Nvec];Product[ 
 If[Length[ListPerm[[i]]]>0,
 (* for split nodes *) 
@@ -2842,6 +2904,9 @@ ConnectedGraphQ[AdjacencyGraph[Mat1+Transpose[Mat1]]]
 FramedFI[Nvec_]:=Module[{Cvec0,Nvec0},
 Nvec0=Flatten[{1,Nvec}];Cvec0=Flatten[{$QuiverPerturb1,Table[RandomInteger[{-$QuiverPerturb1,$QuiverPerturb1}]/$QuiverPerturb1,{i,Length[Nvec]}]}];
 Cvec0-(Plus@@(Cvec0 Nvec0)/Plus@@Nvec0)ConstantArray[1,Length[Nvec0]]];
+
+FramedHeightMatrix[hMat_] := 
+  Join[{Array[{} &, Length[hMat] + 1]}, Join[{{}}, #] & /@ hMat];
 
 D6Framing[hMat_,i_]:={Table[If[c==i,{0},{}],{c,Length[hMat]}],Table[{},{c,Length[hMat]}]};
 
