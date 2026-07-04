@@ -2896,7 +2896,7 @@ DeleteDuplicates[CrysList2]]; *)
 
 CrystalDim[r_,Crys_]:=Module[{Li},Li=Table[Crys[[j,1]],{j,Length[Crys]}];Table[Count[Li,i],{i,r}]];
 
-CrystalWeight[hMat_,fMat_,actionWeight_,Crys_]:= -Sum[Sum[If[lambda[[1]]==mu[[1]],DirectedSign[actionWeight,lambda[[2]]-mu[[2]]],0],{mu,Crys}],{lambda,Crys}]+Sum[Sum[Sum[DirectedSign[actionWeight,lambda[[2]]+a-mu[[2]]],{a,hMat[[lambda[[1]],mu[[1]]]]}],{mu,Crys}],{lambda,Crys}]+Sum[Sum[DirectedSign[actionWeight,f-lambda[[2]]],{f,fMat[[1,lambda[[1]]]]}],{lambda,Crys}]+Sum[Sum[DirectedSign[actionWeight,lambda[[2]]-r],{r,fMat[[2,lambda[[1]]]]}],{lambda,Crys}];
+CrystalWeight[hMat_,fMat_,actionWeight_,Crys_]:= Sum[Sum[Sum[DirectedSign[actionWeight,lambda[[2]]+a-mu[[2]]],{a,hMat[[lambda[[1]],mu[[1]]]]}],{mu,Crys}],{lambda,Crys}]+Sum[Sum[DirectedSign[actionWeight,f-lambda[[2]]],{f,fMat[[1,lambda[[1]]]]}],{lambda,Crys}]+Sum[Sum[DirectedSign[actionWeight,lambda[[2]]-r],{r,fMat[[2,lambda[[1]]]]}],{lambda,Crys}];
 
 DirectedSign[actionWeight_,lambda_]:=Sign[WeightScalarProduct[actionWeight,lambda]];
 
