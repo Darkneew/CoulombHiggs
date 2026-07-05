@@ -2576,13 +2576,13 @@ JKResidueFromNode[degenerateHMat_, potential_, eta_, order_, node_,
              ]]]]
          ]]]]];
     PrintTemporary["Now computing the JK contribution of the ", Length[crystals], " possible crystals"];
-    Total[(crys |-> JKResidueAtSingularity[crys, degenerateHMat, potential, etas, mode]) /@ crystals]
+    Total[(crys |-> JKResidueAtSingularity[crys, degenerateHMat, potential, etas, mode]) /@ crystals] + 1
 ]];
 
 JKResidueFromCrystals[hMat_, potential_, eta_, order_, mode_ : Euler, preventSameHeightSameNode_ : True] :=
-  Total@Array[
+  1 + Total@Array[
     JKResidueFromNode[hMat, potential, eta, order, #, mode, 
-      Range[# - 1], preventSameHeightSameNode] &, Length[hMat]];
+      Range[# - 1], preventSameHeightSameNode]-1 &, Length[hMat]];
 
 
 (* ::Section:: *)
