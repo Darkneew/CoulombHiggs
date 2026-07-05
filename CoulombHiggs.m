@@ -2477,7 +2477,6 @@ Print["Partition",Map[PermutationToPartition,JKListAllPerms[[k,1]]],": ",
 ];
 JKListAllIntersections=DeleteDuplicates[Map[First,Flatten[JKListAllSings,1]]];
 Print[Length[JKListAllIntersections]," distinct intersections in total"];
-
 JKEuler=Table[
   Print["Partition ",Map[PermutationToPartition,JKListAllPerms[[k,1]]]];
  ListDegrees=FindDegrees[JKListAllSings[[k]],ChargeNumMatrix]; 
@@ -2491,11 +2490,9 @@ JKListAllPerms[[k,2]]Table[
 JKResidueTrig[JKListAllStableFlags[[k,j]],Integrand],{j,Length[JKListAllStableFlags[[k]]]}]
   ,{k,Length[JKListAllPerms]}];
 If[$QuiverVerbose,Print["Euler = ",JKEuler," = ",Plus@@Flatten[JKEuler]]];
-
 (* identify singularities with non-zero contributions to Euler characteristics *)
 JKRelevantStableFlags=Table[Select[Table[If[JKEuler[[k,j]]=!=0,JKListAllStableFlags[[k,j]],{}],{j,Length[JKListAllStableFlags[[k]]]}],Length[#]>0&],{k,Length[JKListAllPerms]}];
 Print["From computing the Euler number, ", Map[Length,JKRelevantStableFlags]," stable flags appear to contribute: "];
-
 JKChiGenus=Table[
   Print["Partition ",Map[PermutationToPartition,JKListAllPerms[[k,1]]]];
  (*  ListDegrees=FindDegrees[JKListAllSings[[k]],ChargeNumMatrix]; *)
