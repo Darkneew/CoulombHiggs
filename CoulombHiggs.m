@@ -623,7 +623,7 @@ D4FramedNCDTSeries::usage="D4FramedNCDTSeries[hMat_,Wp_,Wm_,i_,j_,k_,Nn_] constr
 
 D6FramedNCDTSeries::usage="D6FramedNCDTSeries[hMat_,Wp_,Wm_,i_,Nn_,weight_,maxWeightIter_] constructs the generating function of refined NCDT invariants with a D6 framing in node i for dimension vectors up to Nn, for the quiver with height matrix hMat and potential Wp-Wm. If no weight is specificed, a default weight will be used. The algorithm will check wether the weight is valid or not up to order maxWeightIter, which is set to 4 by default.";
 
-FramedHeightMatrix::usage="FramedHeightMatrix[hMat_] constructs the height matrix of the quiver described by hMat with an additional framing node in position 1. No arrow is added from the framing node to the original quiver.";
+FramedHeightMatrix::usage="FramedHeightMatrix[hMat_,Arrows_] constructs the height matrix of the quiver described by hMat with an additional framing node in position 1. Arrows is an optional list of arrows {i,j,w} from i to j with weight w to add to the framed quiver, where the framing node is numbered 0";
 
 D6Framing::usage="D6Framing[hMat_,i_] constructs the framing data fMat for a D6-brane associated to node i";
 
@@ -3004,8 +3004,10 @@ FramedFI[Nvec_]:=Module[{Cvec0,Nvec0},
 Nvec0=Flatten[{1,Nvec}];Cvec0=Flatten[{$QuiverPerturb1,Table[RandomInteger[{-$QuiverPerturb1,$QuiverPerturb1}]/$QuiverPerturb1,{i,Length[Nvec]}]}];
 Cvec0-(Plus@@(Cvec0 Nvec0)/Plus@@Nvec0)ConstantArray[1,Length[Nvec0]]];
 
-FramedHeightMatrix[hMat_] := 
-  Join[{Array[{} &, Length[hMat] + 1]}, Join[{{}}, #] & /@ hMat];
+FramedHeightMatrix[hMat_, Arrows_ : {}] := Module[
+{fMat = Join[{Array[{} &, Length[hMat] + 1]}, Join[{{}}, #] & /@ hMat]}, 
+(arr |-> fMat[[arr[[1]] + 1, arr[[2]] + 1]] = Append[fMat[[arr[[1]] + 1, arr[[2]] + 1]], arr[[3]]]) /@ Arrows; 
+fMat];
 
 D6Framing[hMat_,i_]:={Table[If[c==i,{0},{}],{c,Length[hMat]}],Table[{},{c,Length[hMat]}]};
 
