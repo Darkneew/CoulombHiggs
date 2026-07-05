@@ -140,7 +140,7 @@
  * - Fixed FlowTreeFormula, FlowTreeFormulaRat
  * - Added ChargeMatrixFromToricQuiver, JKToricInitialize, UpdateJKList
  * - Adjusted JKIndex to simplify expressions
- * - Added ZEulerFromQuiver, ZRatFromQuiver
+ * - Added ZEulerFromQuiver, ZRatFromQuiver, CanonicalPartitionForm
  * - Added AddAtomToCrystal, EtaVectorFromEtas, JKResidueAtSingularity
  * - JKResidueFromCrystals, JKResidueFromNode
  * - Added FramedHeightMatrix, FramedJKResidue, D6FramedJKResidue, D4FramedJKesidue
@@ -711,6 +711,8 @@ CoulombBranchFormulaNum::usage="CoulombBranchFormulaNum[Mat_,PMat_,RMat_,Cvec_,N
 
 
 (** Utilities **)
+
+CanonicalPartitionForm::usage = "CanonicalPartitionForm[expr_, variables_] returns the partition function expr in its canonical form, where variables is the number of different variables ";
 
 SymmetryFactor::usage = "SymmetryFactor[pa_] gives 1/|Aut| where Aut is the subgroup of the permutation group leaving the list pa invariant ";
 
@@ -2565,7 +2567,6 @@ JKResidueAtSingularity[crystal_, hMat_, potential_, etas_,
                     positions[[crystal[[3, step]]]]}]; 
                  residued[[crystal[[3, step]]]] = True; 
                  Drop[compactcharges, {c}]; Break[]],
-                
                 If[compactcharges[[c, 2]] == crystal[[3, step]], 
                  If[residued[[compactcharges[[c, 1]]]], 
                   result = -ResidueFast[
@@ -3549,6 +3550,13 @@ Table[Sum[Plus@@ResList[[ResReg[[i,j,2]],ResReg[[i,j,3]]]],{j,Length[ResReg[[i]]
 
 
 (* utilities *)
+
+CanonicalPartitionForm[expr_, variables_] := 
+  FromCoefficientRules[
+   MapAt[FullSimplify, 
+    CoefficientRules[expr, 
+     Subscript[x, #] & /@ Range[variables]], {All, 2}], 
+   Subscript[x, #] & /@ Range[variables]];
 
 SymmetryFactor[pa_]:=Length[Permutations[pa]]/Length[pa]!;
 
