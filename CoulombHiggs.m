@@ -140,7 +140,8 @@
  * - Fixed FlowTreeFormula, FlowTreeFormulaRat
  * - Added ChargeMatrixFromToricQuiver, JKToricInitialize, UpdateJKList
  * - Adjusted JKIndex to simplify expressions
- * - Added FramedHeightMatrix, ZEulerFromQuiver, ZRatFromQuiver, AddAtomToCrystal, EtaVectorFromEtas
+ * - Added FramedHeightMatrix, ZEulerFromQuiver, ZRatFromQuiver
+ * - Added AddAtomToCrystal, EtaVectorFromEtas, JKResidueFromCrystals, JKResidueFromNode
  * 
  *********************************************************************)
 Print["CoulombHiggs 7.1 - A package for evaluating quiver invariants"];
@@ -407,6 +408,10 @@ HuaTermMult::usage="HuaTermMult[Mat_,ListPa_] computes the contribution of one s
 JKIndex::usage = "JKIndex[ChargeMatrix_,Nvec_,Etavec_] computes the chi_y genus of the GLSM with given charge matrix, dimension vector and stability parameter ";
 
 JKIndexSplit::usage = "JKIndexSplit[ChargeMatrix_,Nvec_,Etavec_,SplitNodes_] computes the chi_y genus of the GLSM with given charge matrix, dimension vector and stability parameter, using Cauchy's formula for the nodes listed in SplitNodes ";
+
+JKResidueFromNode::usage = "JKResidueFromNode[hMat_, potential_, eta_, order_, node_, mode_, prohibitedNodes_, preventSameHeightSameNode_] computes the partition function for the index (or chi_y genus if mode is ChiY instead of Euler as by default) of the quiver with potential described by the height matrix hMat up to the given order, starting from node, where potential describes either the full superpotential, a monomial of the potential or the degree of the potential, eta describes the stability parameters, and prohibitedNodes specifies a list of nodes that the algorithm will not visit";
+
+JKResidueFromCrystals::usage = "JKResidueFromCrystals[hMat_, potential_, eta_, order_, mode_ : Euler, preventSameHeightSameNode_] computes the partition function for the index (or chi_y genus if mode is ChiY instead of Euler as by default) of the quiver with potential described by the height matrix hMat up to the given order, where potential describes either the full superpotential, a monomial of the potential or the degree of the potential, and eta describes the stability parameters";
 
 JKInitialize::usage = "JKInitialize[Mat_,RMat_,Cvec_,Nvec] initializes the internal variables "; 
 
@@ -2511,6 +2516,76 @@ JKResidueRational[JKRelevantStableFlags[[k,j]],Integrand],{j,Length[JKRelevantSt
 If[$QuiverVerbose,Print["Chi-genus = ",JKChiGenus," =",Expand[Plus@@Flatten[JKChiGenus]]]];
 JKChiGenus
 ];
+
+JKResidueFromNode[degenerateHMat_, potential_, eta_, order_, node_, 
+   mode_ : Euler, prohibitedNodes_ : {}, 
+   preventSameHeightSameNode_ : True] := 
+  With[{hMat = Map[DeleteDuplicates, degenerateHMat, {2}], 
+    etas = (val |-> Table[val, order]) /@ eta + 
+      Array[Random[Integer, {1, 100}]/10000 &, {Length[eta], order}]},
+    Module[{crystals = {}, queue = CreateDataStructure["Queue"]},
+    (* a crystal is {atoms,charges, order} where atoms is the atoms of the crystal of the form {node, height}, charges is a list of list of charges making it possible to obtain this set of atoms, and order is an arbitrary order in which one can take the residues *)
+    queue["Push", {{{node, 0}}, {{}}, {1}}];
+    PrintTemporary["Starting to investigate all crystals starting by type ", node];
+    While[! queue["EmptyQ"], With[{crys = queue["Pop"]},
+      For[atom = 1, atom <= Length[crys[[1]]], atom++,
+       For[target = 1, target <= Length[degenerateHMat], target++, 
+        If[! MemberQ[prohibitedNodes, target],
+         For[ind = 1, ind <= Length[hMat[[crys[[1, atom, 1]], target]]],
+           ind++, If[
+           ! (MemberQ[
+               crys[[1]], {target, 
+                crys[[1, atom, 2]] - 
+                 hMat[[crys[[1, atom, 1]], target, ind]]}] && 
+              preventSameHeightSameNode),
+           With[{newCrys = 
+              AddAtomToCrystal[{target, 
+                crys[[1, atom, 2]] - 
+                 hMat[[crys[[1, atom, 1]], target, ind]]}, crys, 
+               atom]}, {crystalPos = 
+              FirstPosition[crystals, {newCrys[[1]], _, _}]},
+            If[crystalPos[[0]] === Missing,
+             crystals = Append[crystals, newCrys]; 
+             If[Length[newCrys[[1]]] < order, queue["Push", newCrys]],
+             With[{chargePos = 
+                FirstPosition[crystals[[crystalPos[[1]], 2]], 
+                 newCrys[[2]]]}, 
+              If[chargePos[[0]] === Missing, 
+               crystals[[crystalPos[[1]], 2]] = 
+                Union[crystals[[crystalPos[[1]], 2]], newCrys[[2]]]]]
+             ]]]];
+         For[ind = 1, ind <= Length[hMat[[target, crys[[1, atom, 1]]]]],
+           ind++, If[
+           ! (MemberQ[
+               crys[[1]], {target, 
+                crys[[1, atom, 2]] + 
+                 hMat[[target, crys[[1, atom, 1]], ind]]}] && 
+              preventSameHeightSameNode),
+           With[{newCrys = 
+              AddAtomToCrystal[{target, 
+                crys[[1, atom, 2]] + 
+                 hMat[[target, crys[[1, atom, 1]], ind]]}, crys, atom,
+                True]}, {crystalPos = 
+              FirstPosition[crystals, {newCrys[[1]], _, _}]},
+            If[crystalPos[[0]] === Missing,
+             crystals = Append[crystals, newCrys]; 
+             If[Length[newCrys[[1]]] < order, queue["Push", newCrys]],
+             With[{chargePos = 
+                FirstPosition[crystals[[crystalPos[[1]], 2]], 
+                 newCrys[[2]]]}, 
+              If[chargePos[[0]] === Missing, 
+               crystals[[crystalPos[[1]], 2]] = 
+                Union[crystals[[crystalPos[[1]], 2]], newCrys[[2]]]]]
+             ]]]]
+         ]]]]];
+    PrintTemporary["Now computing the JK contribution of the ", Length[crystals], " possible crystals"];
+    Total[(crys |-> JKResidueAtSingularity[crys, degenerateHMat, potential, etas, mode]) /@ crystals]
+]];
+
+JKResidueFromCrystals[hMat_, potential_, eta_, order_, mode_ : Euler, preventSameHeightSameNode_ : True] :=
+  Total@Array[
+    JKResidueFromNode[hMat, potential, eta, order, #, mode, 
+      Range[# - 1], preventSameHeightSameNode] &, Length[hMat]];
 
 
 (* ::Section:: *)
