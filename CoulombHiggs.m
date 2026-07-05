@@ -141,7 +141,8 @@
  * - Added ChargeMatrixFromToricQuiver, JKToricInitialize, UpdateJKList
  * - Adjusted JKIndex to simplify expressions
  * - Added ZEulerFromQuiver, ZRatFromQuiver
- * - Added AddAtomToCrystal, EtaVectorFromEtas, JKResidueFromCrystals, JKResidueFromNode
+ * - Added AddAtomToCrystal, EtaVectorFromEtas, JKResidueAtSingularity
+ * - JKResidueFromCrystals, JKResidueFromNode
  * - Added FramedHeightMatrix, FramedJKResidue, D6FramedJKResidue, D4FramedJKesidue
  * 
  *********************************************************************)
@@ -409,6 +410,8 @@ HuaTermMult::usage="HuaTermMult[Mat_,ListPa_] computes the contribution of one s
 JKIndex::usage = "JKIndex[ChargeMatrix_,Nvec_,Etavec_] computes the chi_y genus of the GLSM with given charge matrix, dimension vector and stability parameter ";
 
 JKIndexSplit::usage = "JKIndexSplit[ChargeMatrix_,Nvec_,Etavec_,SplitNodes_] computes the chi_y genus of the GLSM with given charge matrix, dimension vector and stability parameter, using Cauchy's formula for the nodes listed in SplitNodes ";
+
+JKResidueAtSingularity::usage = "JKResidueAtSingularity[crystal_, hMat_, potential_, etas_, mode_] computes the Jeffrey-Kirwan residue for the Euler or chi_y genus depending on mode, for the given crystal of the form {atoms, chargeList, order}, for the quiver described by height matrix hMat, where potential is either the full superpotential, a monomial of the potential or the degree of the potential, and where etas is a list of perturbed stability vectors";
 
 JKResidueFromNode::usage = "JKResidueFromNode[hMat_, potential_, eta_, order_, node_, mode_, prohibitedNodes_, preventSameHeightSameNode_] computes the partition function for the index (or chi_y genus if mode is ChiY instead of Euler as by default) of the quiver with potential described by the height matrix hMat up to the given order, starting from node, where potential describes either the full superpotential, a monomial of the potential or the degree of the potential, eta describes the stability parameters, prohibitedNodes optionally specifies a list of nodes that the algorithm will not visit, and preventSameHeightSameNode optionally tells the code to assume that two atoms of the same type should not have the same coordinate in a crystal";
 
@@ -2521,6 +2524,90 @@ If[$QuiverVerbose,Print["Chi-genus = ",JKChiGenus," =",Expand[Plus@@Flatten[JKCh
 JKChiGenus
 ];
 
+JKResidueAtSingularity[crystal_, hMat_, potential_, etas_, 
+   mode_ : Euler] := 
+  With[{atomTypeList = First /@ crystal[[1]], 
+    positions = Last /@ crystal[[1]]}, {correspondence = 
+     u @@ # & /@ 
+      Module[{count = <||>}, ({#, 
+           count[#] = Lookup[count, #, 0] + 1} &) /@ atomTypeList], 
+    nvec = Lookup[Counts[atomTypeList], Range[Length[hMat]], 
+      0]}, {ratCorrespondence = v @@ # & /@ correspondence, 
+    eta = EtaVectorFromEtas[atomTypeList, etas, nvec], 
+    eulerIntegrand = ZEulerFromQuiver[hMat, potential, nvec], 
+    chiYIntegrand = 
+     If[mode === ChiY, ZRatFromQuiver[hMat, potential, nvec], 0]},
+   Total[(chargeSet |->
+        With[{cutcharge = 
+           Drop[Transpose[
+             chargeSet], {crystal[[3, 
+               1]]}]}, {compactcharges = {FirstPosition[#, 1][[1]], 
+              FirstPosition[#, -1][[1]]} & /@ chargeSet, 
+          stab = LinearSolve[cutcharge, 
+            Drop[eta, {crystal[[3, 1]]}]]}, {minstab = Min[stab]},
+         If[minstab < 0, 0, 
+          If[minstab == 0, Message["Eta is not sum-regular"], 
+           If[Or @@ Equal @@@ Partition[Sort[stab], 2, 1], 
+            Message["Eta is not sum-regular"],
+            Module[
+             {residued = Array[False &, Length[correspondence]], 
+              result = 
+               eulerIntegrand /. {correspondence[[crystal[[3, 1]]]] ->
+                   positions[[crystal[[3, 1]]]]}},
+             residued[[crystal[[3, 1]]]] = True;
+             For[step = 2, step <= Length[crystal[[3]]], step++,
+              For[c = 1, c <= Length[compactcharges], c++,
+               If[compactcharges[[c, 1]] == crystal[[3, step]], 
+                If[residued[[compactcharges[[c, 2]]]], 
+                 result = 
+                  ResidueFast[
+                   result, {correspondence[[crystal[[3, step]]]], 
+                    positions[[crystal[[3, step]]]]}]; 
+                 residued[[crystal[[3, step]]]] = True; 
+                 Drop[compactcharges, {c}]; Break[]],
+                
+                If[compactcharges[[c, 2]] == crystal[[3, step]], 
+                 If[residued[[compactcharges[[c, 1]]]], 
+                  result = -ResidueFast[
+                    result, {correspondence[[crystal[[3, step]]]], 
+                    positions[[crystal[[3, step]]]]}]; 
+                  residued[[crystal[[3, step]]]] = True; 
+                  Drop[compactcharges, {c}]; Break[]]
+                 ]]
+               ]];
+             If[mode === Euler, 
+              Sign[Det[cutcharge]] result/Det[cutcharge], 
+              If[res === 0, 0,
+               Module[
+                {chiYresidued = 
+                  Array[False &, Length[ratCorrespondence]], 
+                 chiYresult = 
+                  chiYIntegrand /. {ratCorrespondence[[crystal[[3, 
+                    1]]]] -> positions[[crystal[[3, 1]]]]}},
+                chiYresidued[[crystal[[3, 1]]]] = True;
+                For[step = 2, step <= Length[crystal[[3]]], step++,
+                 For[c = 1, c <= Length[compactcharges], c++,
+                  If[compactcharges[[c, 1]] == crystal[[3, step]], 
+                   If[chiYresidued[[compactcharges[[c, 2]]]], 
+                    chiYresult = 
+                    ResidueFast[
+                    chiYresult, {ratCorrespondence[[crystal[[3, step]]]],
+                     positions[[crystal[[3, step]]]]}]; 
+                    chiYresidued[[crystal[[3, step]]]] = True; 
+                    Drop[compactcharges, {c}]; Break[]],
+                   If[compactcharges[[c, 2]] == crystal[[3, step]], 
+                    If[chiYresidued[[compactcharges[[c, 1]]]], 
+                    chiYresult = -ResidueFast[
+                    chiYresult, {ratCorrespondence[[crystal[[3, step]]]],
+                     positions[[crystal[[3, step]]]]}]; 
+                    chiYresidued[[crystal[[3, step]]]] = True; 
+                    Drop[compactcharges, {c}]; Break[]]
+                    ]]
+                  ]]; Sign[Det[cutcharge]] chiYresult/Det[cutcharge]
+                ]]]]]]]]) /@ crystal[[2]]] Times @@ 
+     Array[Subscript[x, #]^nvec[[#]] &, Length[nvec]]
+];
+
 JKResidueFromNode[degenerateHMat_, potential_, eta_, order_, node_, 
    mode_ : Euler, prohibitedNodes_ : {}, 
    preventSameHeightSameNode_ : True] := 
@@ -2596,8 +2683,8 @@ FramedJKResidue[hMat_, potential_, eta_, order_, framingArrows_, mode_ : Euler, 
    Replace[1 + 
      Limit[(JKResidueFromNode[fMat, 
           Replace[potential, Phi[i_, j_, k_] -> Phi[i + 1, j + 1, k], 
-           All], eta, order, 1, mode, {1}, 
-          preventSameHeightSameNode] - 1)/Subscript[x, 1], 
+           All], eta, order+1, 1, mode, {1}, 
+          preventSameHeightSameNode]) - 1)/Subscript[x, 1], 
     Subscript[x, 1] -> 0], 
   Subscript[x, i_] -> Subscript[x, i - 1], All]];
 
