@@ -413,15 +413,15 @@ JKIndexSplit::usage = "JKIndexSplit[ChargeMatrix_,Nvec_,Etavec_,SplitNodes_] com
 
 JKResidueAtSingularity::usage = "JKResidueAtSingularity[crystal_, hMat_, potential_, etas_, mode_] computes the Jeffrey-Kirwan residue for the Euler or chi_y genus depending on mode, for the given crystal of the form {atoms, chargeList, order}, for the quiver described by height matrix hMat, where potential is either the full superpotential, a monomial of the potential or the degree of the potential, and where etas is a list of perturbed stability vectors";
 
-JKResidueFromNode::usage = "JKResidueFromNode[hMat_, potential_, eta_, order_, node_, mode_, prohibitedNodes_, preventSameHeightSameNode_] computes the partition function for the index (or chi_y genus if mode is ChiY instead of Euler as by default) of the quiver with potential described by the height matrix hMat up to the given order, starting from node, where potential describes either the full superpotential, a monomial of the potential or the degree of the potential, eta describes the stability parameters, prohibitedNodes optionally specifies a list of nodes that the algorithm will not visit, and preventSameHeightSameNode optionally tells the code to assume that two atoms of the same type should not have the same coordinate in a crystal";
+JKResidueFromNode::usage = "JKResidueFromNode[hMat_, potential_, eta_, order_, node_, mode_, prohibitedNodes_, preventSameHeightSameNode_] computes the partition function for the index (or chi_y genus if mode is 'ChiY' instead of 'Euler' as by default) of the quiver with potential described by the height matrix hMat up to the given order, starting from node, where potential describes either the full superpotential, a monomial of the potential or the degree of the potential, eta describes the stability parameters, prohibitedNodes optionally specifies a list of nodes that the algorithm will not visit, and preventSameHeightSameNode optionally tells the code to assume that two atoms of the same type should not have the same coordinate in a crystal";
 
-JKResidueFromCrystals::usage = "JKResidueFromCrystals[hMat_, potential_, eta_, order_, mode_ : Euler, preventSameHeightSameNode_] computes the partition function for the index (or chi_y genus if mode is ChiY instead of Euler as by default) of the quiver with potential described by the height matrix hMat up to the given order, where potential describes either the full superpotential, a monomial of the potential or the degree of the potential, eta describes the stability parameters, and preventSameHeightSameNode optionally tells the code to assume that two atoms of the same type should not have the same coordinate in a crystal";
+JKResidueFromCrystals::usage = "JKResidueFromCrystals[hMat_, potential_, eta_, order_, mode_, preventSameHeightSameNode_] computes the partition function for the index (or chi_y genus if mode is 'ChiY' instead of 'Euler' as by default) of the quiver with potential described by the height matrix hMat up to the given order, where potential describes either the full superpotential, a monomial of the potential or the degree of the potential, eta describes the stability parameters, and preventSameHeightSameNode optionally tells the code to assume that two atoms of the same type should not have the same coordinate in a crystal";
 
-FramedJKResidue::usage = "FramedJKResidue[hMat_, potential_, eta_, order_, framingArrows_, mode_, preventSameHeightSameNode_] computes the framed partition function for the index (or chi_y genus if mode is ChiY instead of Euler as by default) of the quiver with potential described by the height matrix hMat up to the given order, where potential describes either the full superpotential, a monomial of the potential or the degree of the potential, eta describes the stability parameters, framingArrows lists the framing arrows, and preventSameHeightSameNode optionally tells the code to assume that two atoms of the same type should not have the same coordinate in a crystal";
+FramedJKResidue::usage = "FramedJKResidue[hMat_, potential_, eta_, order_, framingArrows_, mode_, preventSameHeightSameNode_] computes the framed partition function for the index (or chi_y genus if mode is 'ChiY' instead of 'Euler' as by default) of the quiver with potential described by the height matrix hMat up to the given order, where potential describes either the full superpotential, a monomial of the potential or the degree of the potential, eta describes the stability parameters, framingArrows lists the framing arrows, and preventSameHeightSameNode optionally tells the code to assume that two atoms of the same type should not have the same coordinate in a crystal";
 
-D6FramedJKResidue::usage = "D6FramedJKResidue[hMat_, potential_, i_, eta_, Nn_, mode_, preventSameHeightSameNode_] computes the D6-framed partition function for the index (or chi_y genus if mode is ChiY instead of Euler as by default) of the quiver with potential described by the height matrix hMat and framed at node i up to the given order, where potential describes either the full superpotential, a monomial of the potential or the degree of the potential, eta describes the stability parameters, and preventSameHeightSameNode optionally tells the code to assume that two atoms of the same type should not have the same coordinate in a crystal";
+D6FramedJKResidue::usage = "D6FramedJKResidue[hMat_, potential_, i_, eta_, Nn_, mode_, preventSameHeightSameNode_] computes the D6-framed partition function for the index (or chi_y genus if mode is 'ChiY' instead of 'Euler' as by default) of the quiver with potential described by the height matrix hMat and framed at node i up to the given order, where potential describes either the full superpotential, a monomial of the potential or the degree of the potential, eta describes the stability parameters, and preventSameHeightSameNode optionally tells the code to assume that two atoms of the same type should not have the same coordinate in a crystal";
 
-D4FramedJKResidue::usage = "D4FramedJKResidue[hMat_, potential_, i_, j_, k_, eta_, Nn_, mode_, preventSameHeightSameNode_] computes the D4-framed partition function for the index (or chi_y genus if mode is ChiY instead of Euler as by default) of the quiver with potential described by the height matrix hMat and framed at arrow Phi[i,j,k] up to the given order, where potential describes either the full superpotential, a monomial of the potential or the degree of the potential, eta describes the stability parameters, and preventSameHeightSameNode optionally tells the code to assume that two atoms of the same type should not have the same coordinate in a crystal";
+D4FramedJKResidue::usage = "D4FramedJKResidue[hMat_, potential_, i_, j_, k_, eta_, Nn_, mode_, preventSameHeightSameNode_] computes the D4-framed partition function for the index (or chi_y genus if mode is 'ChiY' instead of 'Euler' as by default) of the quiver with potential described by the height matrix hMat and framed at arrow Phi[i,j,k] up to the given order, where potential describes either the full superpotential, a monomial of the potential or the degree of the potential, eta describes the stability parameters, and preventSameHeightSameNode optionally tells the code to assume that two atoms of the same type should not have the same coordinate in a crystal";
 
 JKInitialize::usage = "JKInitialize[Mat_,RMat_,Cvec_,Nvec] initializes the internal variables "; 
 
@@ -712,7 +712,7 @@ CoulombBranchFormulaNum::usage="CoulombBranchFormulaNum[Mat_,PMat_,RMat_,Cvec_,N
 
 (** Utilities **)
 
-CanonicalPartitionForm::usage = "CanonicalPartitionForm[expr_, variables_] returns the partition function expr in its canonical form, where variables is the number of different variables ";
+CanonicalPartitionForm::usage = "CanonicalPartitionForm[expr_, variables_, simplify_] returns the partition function expr in its canonical form, where variables is the number of different variables and where the optional parameter simplify says wether the coefficients should be fully simplified or not";
 
 SymmetryFactor::usage = "SymmetryFactor[pa_] gives 1/|Aut| where Aut is the subgroup of the permutation group leaving the list pa invariant ";
 
@@ -2527,7 +2527,7 @@ JKChiGenus
 ];
 
 JKResidueAtSingularity[crystal_, hMat_, potential_, etas_, 
-   mode_ : Euler] := 
+   mode_ : "Euler"] := 
   With[{atomTypeList = First /@ crystal[[1]], 
     positions = Last /@ crystal[[1]]}, {correspondence = 
      u @@ # & /@ 
@@ -2535,9 +2535,10 @@ JKResidueAtSingularity[crystal_, hMat_, potential_, etas_,
            count[#] = Lookup[count, #, 0] + 1} &) /@ atomTypeList], 
     nvec = Lookup[Counts[atomTypeList], Range[Length[hMat]], 
       0]}, {ratCorrespondence = v @@ # & /@ correspondence, 
+      ratPositions=y^(2 positions),
     eta = EtaVectorFromEtas[atomTypeList, etas, nvec], 
     eulerIntegrand = ZEulerFromQuiver[hMat, potential, nvec], 
-    chiYIntegrand = If[mode === ChiY, ZRatFromQuiver[hMat, potential, nvec], 0]},
+    chiYIntegrand = If[mode =!= "Euler", ZRatFromQuiver[hMat, potential, nvec], 0]},
    Total[(chargeSet |->
         With[{cutcharge = 
            Drop[Transpose[
@@ -2575,15 +2576,15 @@ JKResidueAtSingularity[crystal_, hMat_, potential_, etas_,
                   Drop[compactcharges, {c}]; Break[]]
                  ]]
                ]];
-             If[mode === Euler, 
+             If[mode === "Euler", 
               Sign[Det[cutcharge]] result/Det[cutcharge], 
-              If[res === 0, 0,
-               Module[
+              If[result === 0, 0,
+              Module[
                 {chiYresidued = 
                   Array[False &, Length[ratCorrespondence]], 
                  chiYresult = 
                   chiYIntegrand /. {ratCorrespondence[[crystal[[3, 
-                    1]]]] -> positions[[crystal[[3, 1]]]]}},
+                    1]]]] -> ratPositions[[crystal[[3, 1]]]]}},
                 chiYresidued[[crystal[[3, 1]]]] = True;
                 For[step = 2, step <= Length[crystal[[3]]], step++,
                  For[c = 1, c <= Length[compactcharges], c++,
@@ -2592,14 +2593,14 @@ JKResidueAtSingularity[crystal_, hMat_, potential_, etas_,
                     chiYresult = 
                     ResidueFast[
                     chiYresult, {ratCorrespondence[[crystal[[3, step]]]],
-                     positions[[crystal[[3, step]]]]}]; 
+                     ratPositions[[crystal[[3, step]]]]}]; 
                     chiYresidued[[crystal[[3, step]]]] = True; 
                     Drop[compactcharges, {c}]; Break[]],
                    If[compactcharges[[c, 2]] == crystal[[3, step]], 
                     If[chiYresidued[[compactcharges[[c, 1]]]], 
                     chiYresult = -ResidueFast[
                     chiYresult, {ratCorrespondence[[crystal[[3, step]]]],
-                     positions[[crystal[[3, step]]]]}]; 
+                     ratPositions[[crystal[[3, step]]]]}]; 
                     chiYresidued[[crystal[[3, step]]]] = True; 
                     Drop[compactcharges, {c}]; Break[]]
                     ]]
@@ -2609,7 +2610,7 @@ JKResidueAtSingularity[crystal_, hMat_, potential_, etas_,
 ];
 
 JKResidueFromNode[degenerateHMat_, potential_, eta_, order_, node_, 
-   mode_ : Euler, prohibitedNodes_ : {}, 
+   mode_ : "Euler", prohibitedNodes_ : {}, 
    preventSameHeightSameNode_ : True] := 
   With[{hMat = Map[DeleteDuplicates, degenerateHMat, {2}], 
     etas = (val |-> Table[val, order]) /@ eta + 
@@ -2670,15 +2671,15 @@ JKResidueFromNode[degenerateHMat_, potential_, eta_, order_, node_,
              ]]]]
          ]]]]];
     PrintTemporary["Now computing the JK contribution of the ", Length[crystals], " possible crystals"];
-    CanonicalPartitionForm[Total[(crys |-> JKResidueAtSingularity[crys, degenerateHMat, potential, etas, mode]) /@ crystals],Length[hMat]] + 1
+    CanonicalPartitionForm[Total[(crys |-> JKResidueAtSingularity[crys, degenerateHMat, potential, etas, mode]) /@ crystals],Length[hMat],If[mode==="Euler",True,False]] + 1
 ]];
 
-JKResidueFromCrystals[hMat_, potential_, eta_, order_, mode_ : Euler, preventSameHeightSameNode_ : True] :=
+JKResidueFromCrystals[hMat_, potential_, eta_, order_, mode_ : "Euler", preventSameHeightSameNode_ : True] :=
   1 + CanonicalPartitionForm[Total@Array[
     JKResidueFromNode[hMat, potential, eta, order, #, mode, 
-      Range[# - 1], preventSameHeightSameNode]-1 &, Length[hMat]],Length[hMat]];
+      Range[# - 1], preventSameHeightSameNode]-1 &, Length[hMat]],Length[hMat],If[mode==="Euler",True,False]];
 
-FramedJKResidue[hMat_, potential_, eta_, order_, framingArrows_, mode_ : Euler, preventSameHeightSameNode_ : True] := 
+FramedJKResidue[hMat_, potential_, eta_, order_, framingArrows_, mode_ : "Euler", preventSameHeightSameNode_ : True] := 
   With[{fMat = FramedHeightMatrix[hMat, framingArrows]}, 
    CanonicalPartitionForm[Replace[1 + 
      Limit[(JKResidueFromNode[fMat, 
@@ -2686,12 +2687,12 @@ FramedJKResidue[hMat_, potential_, eta_, order_, framingArrows_, mode_ : Euler, 
            All], Join[{-Total[eta]},eta], order+1, 1, mode, {1}, 
           preventSameHeightSameNode] - 1)/Subscript[x, 1], 
     Subscript[x, 1] -> 0], 
-  Subscript[x, abf_] -> Subscript[x, abf - 1], All],Length[hMat]]];
+  Subscript[x, abf_] -> Subscript[x, abf - 1], All],Length[hMat],If[mode==="Euler",True,False]]];
 
-D6FramedJKResidue[hMat_, potential_, i_, eta_, Nn_, mode_ : Euler, preventSameHeightSameNode_ : True] := 
+D6FramedJKResidue[hMat_, potential_, i_, eta_, Nn_, mode_ : "Euler", preventSameHeightSameNode_ : True] := 
   FramedJKResidue[hMat, potential, eta, Nn, {{0, i, 0}}, mode, preventSameHeightSameNode];
 
-D4FramedJKResidue[hMat_, potential_, i_, j_, k_, eta_, Nn_, mode_ : Euler, preventSameHeightSameNode_ : True] := 
+D4FramedJKResidue[hMat_, potential_, i_, j_, k_, eta_, Nn_, mode_ : "Euler", preventSameHeightSameNode_ : True] := 
   FramedJKResidue[hMat, potential, eta, Nn, {{0, i, (h3 - hMat[[i, j, k]])/2}, {j, 0, (h3 - hMat[[i, j, k]])/2}}, mode, preventSameHeightSameNode];
 
 
@@ -3550,9 +3551,9 @@ Table[Sum[Plus@@ResList[[ResReg[[i,j,2]],ResReg[[i,j,3]]]],{j,Length[ResReg[[i]]
 
 (* utilities *)
 
-CanonicalPartitionForm[expr_, variables_] := 
+CanonicalPartitionForm[expr_, variables_, simplify_: True] := 
   FromCoefficientRules[
-   MapAt[FullSimplify, 
+   MapAt[If[simplify,FullSimplify,Identity], 
     CoefficientRules[expr, 
      Subscript[x, #] & /@ Range[variables]], {All, 2}], 
    Subscript[x, #] & /@ Range[variables]];
