@@ -2,9 +2,9 @@
 
 (*********************************************************************
  *
- *  CoulombHiggs.m 7.0            
+ *  CoulombHiggs.m 7.1            
  *                                                          
- *  Copyright B. Pioline, April 2026
+ *  Copyright B. Pioline, July 2026
  *
  *  Distributed under the terms of the GNU General Public License 
  *
