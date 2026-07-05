@@ -2537,8 +2537,7 @@ JKResidueAtSingularity[crystal_, hMat_, potential_, etas_,
       0]}, {ratCorrespondence = v @@ # & /@ correspondence, 
     eta = EtaVectorFromEtas[atomTypeList, etas, nvec], 
     eulerIntegrand = ZEulerFromQuiver[hMat, potential, nvec], 
-    chiYIntegrand = 
-     If[mode === ChiY, ZRatFromQuiver[hMat, potential, nvec], 0]},
+    chiYIntegrand = If[mode === ChiY, ZRatFromQuiver[hMat, potential, nvec], 0]},
    Total[(chargeSet |->
         With[{cutcharge = 
            Drop[Transpose[
@@ -2683,11 +2682,11 @@ FramedJKResidue[hMat_, potential_, eta_, order_, framingArrows_, mode_ : Euler, 
   With[{fMat = FramedHeightMatrix[hMat, framingArrows]}, 
    Replace[1 + 
      Limit[(JKResidueFromNode[fMat, 
-          Replace[potential, Phi[i_, j_, k_] -> Phi[i + 1, j + 1, k], 
-           All], eta, order+1, 1, mode, {1}, 
-          preventSameHeightSameNode]) - 1)/Subscript[x, 1], 
+          Replace[potential, Phi[abc_, abd_, abe_] -> Phi[abc + 1, abd + 1, abe], 
+           All], Join[{-Total[eta]},eta], order+1, 1, mode, {1}, 
+          preventSameHeightSameNode] - 1)/Subscript[x, 1], 
     Subscript[x, 1] -> 0], 
-  Subscript[x, i_] -> Subscript[x, i - 1], All]];
+  Subscript[x, abf_] -> Subscript[x, abf - 1], All]];
 
 D6FramedJKResidue[hMat_, potential_, i_, eta_, Nn_, mode_ : Euler, preventSameHeightSameNode_ : True] := 
   FramedJKResidue[hMat, potential, eta, Nn, {{0, i, 0}}, mode, preventSameHeightSameNode];
