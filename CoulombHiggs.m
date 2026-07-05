@@ -143,7 +143,7 @@
  * - Added ZEulerFromQuiver, ZRatFromQuiver, CanonicalPartitionForm
  * - Added AddAtomToCrystal, EtaVectorFromEtas, JKResidueAtSingularity
  * - JKResidueFromCrystals, JKResidueFromNode
- * - Added FramedHeightMatrix, FramedJKResidue, D6FramedJKResidue, D4FramedJKesidue
+ * - Added FramedHeightMatrix, FramedJKResidue, D6FramedJKResidue, D4FramedJKResidue
  * 
  *********************************************************************)
 Print["CoulombHiggs 7.1 - A package for evaluating quiver invariants"];
@@ -421,7 +421,7 @@ FramedJKResidue::usage = "FramedJKResidue[hMat_, potential_, eta_, order_, frami
 
 D6FramedJKResidue::usage = "D6FramedJKResidue[hMat_, potential_, i_, eta_, Nn_, mode_, preventSameHeightSameNode_] computes the D6-framed partition function for the index (or chi_y genus if mode is ChiY instead of Euler as by default) of the quiver with potential described by the height matrix hMat and framed at node i up to the given order, where potential describes either the full superpotential, a monomial of the potential or the degree of the potential, eta describes the stability parameters, and preventSameHeightSameNode optionally tells the code to assume that two atoms of the same type should not have the same coordinate in a crystal";
 
-D4FramedJKesidue::usage = "D4FramedJKesidue[hMat_, potential_, i_, j_, k_, eta_, Nn_, mode_, preventSameHeightSameNode_] computes the D4-framed partition function for the index (or chi_y genus if mode is ChiY instead of Euler as by default) of the quiver with potential described by the height matrix hMat and framed at arrow Phi[i,j,k] up to the given order, where potential describes either the full superpotential, a monomial of the potential or the degree of the potential, eta describes the stability parameters, and preventSameHeightSameNode optionally tells the code to assume that two atoms of the same type should not have the same coordinate in a crystal";
+D4FramedJKResidue::usage = "D4FramedJKResidue[hMat_, potential_, i_, j_, k_, eta_, Nn_, mode_, preventSameHeightSameNode_] computes the D4-framed partition function for the index (or chi_y genus if mode is ChiY instead of Euler as by default) of the quiver with potential described by the height matrix hMat and framed at arrow Phi[i,j,k] up to the given order, where potential describes either the full superpotential, a monomial of the potential or the degree of the potential, eta describes the stability parameters, and preventSameHeightSameNode optionally tells the code to assume that two atoms of the same type should not have the same coordinate in a crystal";
 
 JKInitialize::usage = "JKInitialize[Mat_,RMat_,Cvec_,Nvec] initializes the internal variables "; 
 
@@ -2691,7 +2691,7 @@ FramedJKResidue[hMat_, potential_, eta_, order_, framingArrows_, mode_ : Euler, 
 D6FramedJKResidue[hMat_, potential_, i_, eta_, Nn_, mode_ : Euler, preventSameHeightSameNode_ : True] := 
   FramedJKResidue[hMat, potential, eta, Nn, {{0, i, 0}}, mode, preventSameHeightSameNode];
 
-D4FramedJKesidue[hMat_, potential_, i_, j_, k_, eta_, Nn_, mode_ : Euler, preventSameHeightSameNode_ : True] := 
+D4FramedJKResidue[hMat_, potential_, i_, j_, k_, eta_, Nn_, mode_ : Euler, preventSameHeightSameNode_ : True] := 
   FramedJKResidue[hMat, potential, eta, Nn, {{0, i, (h3 - hMat[[i, j, k]])/2}, {j, 0, (h3 - hMat[[i, j, k]])/2}}, mode, preventSameHeightSameNode];
 
 
