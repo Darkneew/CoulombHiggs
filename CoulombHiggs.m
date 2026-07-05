@@ -2670,23 +2670,23 @@ JKResidueFromNode[degenerateHMat_, potential_, eta_, order_, node_,
              ]]]]
          ]]]]];
     PrintTemporary["Now computing the JK contribution of the ", Length[crystals], " possible crystals"];
-    Total[(crys |-> JKResidueAtSingularity[crys, degenerateHMat, potential, etas, mode]) /@ crystals] + 1
+    CanonicalPartitionForm[Total[(crys |-> JKResidueAtSingularity[crys, degenerateHMat, potential, etas, mode]) /@ crystals],Length[hMat]] + 1
 ]];
 
 JKResidueFromCrystals[hMat_, potential_, eta_, order_, mode_ : Euler, preventSameHeightSameNode_ : True] :=
-  1 + Total@Array[
+  1 + CanonicalPartitionForm[Total@Array[
     JKResidueFromNode[hMat, potential, eta, order, #, mode, 
-      Range[# - 1], preventSameHeightSameNode]-1 &, Length[hMat]];
+      Range[# - 1], preventSameHeightSameNode]-1 &, Length[hMat]],Length[hMat]];
 
 FramedJKResidue[hMat_, potential_, eta_, order_, framingArrows_, mode_ : Euler, preventSameHeightSameNode_ : True] := 
   With[{fMat = FramedHeightMatrix[hMat, framingArrows]}, 
-   Replace[1 + 
+   CanonicalPartitionForm[Replace[1 + 
      Limit[(JKResidueFromNode[fMat, 
           Replace[potential, Phi[abc_, abd_, abe_] -> Phi[abc + 1, abd + 1, abe], 
            All], Join[{-Total[eta]},eta], order+1, 1, mode, {1}, 
           preventSameHeightSameNode] - 1)/Subscript[x, 1], 
     Subscript[x, 1] -> 0], 
-  Subscript[x, abf_] -> Subscript[x, abf - 1], All]];
+  Subscript[x, abf_] -> Subscript[x, abf - 1], All],Length[hMat]]];
 
 D6FramedJKResidue[hMat_, potential_, i_, eta_, Nn_, mode_ : Euler, preventSameHeightSameNode_ : True] := 
   FramedJKResidue[hMat, potential, eta, Nn, {{0, i, 0}}, mode, preventSameHeightSameNode];
