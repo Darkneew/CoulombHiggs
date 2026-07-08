@@ -141,8 +141,8 @@
  * - Added ChargeMatrixFromToricQuiver, JKToricInitialize, UpdateJKList
  * - Adjusted JKIndex to simplify expressions
  * - Added ZEulerFromQuiver, ZRatFromQuiver, CanonicalPartitionForm
- * - Added AddAtomToCrystal, EtaVectorFromEtas, JKResidueAtSingularity
- * - JKResidueFromCrystals, JKResidueFromNode
+ * - Added AddAtomToCrystal, EtaVectorFromEtas, FlagResidue
+ * - JKResidueFromCrystals, JKResidueFromNode, JKResidueAtSingularity
  * - Added FramedHeightMatrix, FramedJKResidue, D6FramedJKResidue, D4FramedJKResidue
  * 
  *********************************************************************)
@@ -432,6 +432,8 @@ UpdateJKList::usage = "UpdateJKList[Nvec_] updates the internal variable listing
 AddAtomToCrystal::usage = "AddAtomToCrystal[Atom_, Crystal_, From_, Reverse_] adds the atom numbered Atom coming from the atom numbered From to the crystal Crystal, with Revese specifying wether the atom is added through an arrow or anti-arrow";
 
 EtaVectorFromEtas::usage = "EtaVectorFromEtas[atomTypeList_, etas_, Nvec_] computes the eta (expanded stability) vector for dimension vector Nvec, where atomTypeList specifies in which order the atoms appear and etas give a list of already perturbed numbers";
+
+FlagResidue::usage = "FlagResidue[Integrand_, positions_, order_, correspondence_] computes the flag residue of the integrand at the given positions in the order given, where the n^th variable's name is correspondence[[n]]";
 
 ZEuler::usage="ZEuler[ChargeMatrix,Nvec] computes the integrand in the residue formula for the index ";
  
@@ -2048,6 +2050,17 @@ EtaVectorFromEtas[atomTypeList_, etas_, Nvec_] :=
           eta[[type]] = Drop[eta[[type]], 1]; param]) /@ atomTypeList},
     flateta - Total[flateta]/Length[flateta]
 ]];
+
+
+FlagResidue[Integrand_, positions_, order_, correspondence_] := 
+  Module[{result = 
+     Integrand /. {correspondence[[order[[1]]]] -> 
+        positions[[order[[1]]]]}},
+   Array[(result = 
+       ResidueFast[
+        result, {correspondence[[order[[# + 1]]]], 
+         positions[[order[[# + 1]]]]}]) &, Length[order] - 1]; result
+];
 
 ZEuler[ChargeMatrix_,Nvec_]:= (UpdateJKList[Nvec];1/Product[Nvec[[i]]!,{i,Length[Nvec]}]Product[If[ii==jj,1,-(u[i,ii]-u[i,jj])/ (u[i,ii]-u[i,jj]-1 )],{i,Length[Nvec]},{ii,Nvec[[i]]},{jj,Nvec[[i]]}]Product[(-((Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+(ChargeMatrix[[i,-2]]/2-1)))/((Sum[ChargeMatrix[[i,j]]JKListuAll[[j]],{j,Length[JKListuAll]}]+ ChargeMatrix[[i,-2]]/2)))^ChargeMatrix[[i,-1]],{i,Length[ChargeMatrix]}]);
 
