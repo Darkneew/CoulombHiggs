@@ -2028,18 +2028,16 @@ JKToricInitialize[hMat_, fMat_, Cvec_, Nvec_, OptionalWeights_:{Sqrt[2],Sqrt[3]}
 
 UpdateJKList[Nvec_]:=JKListuAll=Flatten[Table[u[i, ii], {i, Length[Nvec]}, {ii, Nvec[[i]]}]];
 
-AddAtomToCrystal[atom_, crystal_, from_, reverse_ : False] :=
-  With[{atomList = Sort[Append[crystal[[1]], atom]]}, {newpos = 
-     Position[atomList, atom][[-1, 1]]}, {originInd = 
-     If[from >= newpos, from + 1, from]}, {newcharge = 
-     Array[If[# == newpos, If[reverse, -1, 1], 
-        If[# == originInd, If[reverse, 1, -1], 0]] &, Length[atomList]]},
-   {atomList, (path |-> 
-       Sort[Append[
-         If[Length[path] > 0, 
-          Transpose[
-           Insert[Transpose[path], Table[0, Length[path]], newpos]], 
-          path], newcharge]]) /@ crystal[[2]], 
+AddAtomToCrystal[atom_, crystal_, from_, reverse_ : False] := 
+  With[{atomList = Sort[Append[crystal[[1]], atom]]}, 
+  {newpos = Position[atomList, atom][[-1, 1]]}, 
+  {originInd = If[from >= newpos, from + 1, from]}, 
+  {newcharge = Array[If[# == newpos, If[reverse, -1, 1], If[# == originInd, If[reverse, 1, -1], 0]] &, Length[atomList]]}, 
+  {atomList, 
+    Append[If[Length[crystal[[2]]] > 0, 
+      Transpose[
+       Insert[Transpose[crystal[[2]]], Table[0, Length[crystal[[2]]]],
+         newpos]], crystal[[2]]], newcharge], 
     Append[If[# >= newpos, # + 1, #] & /@ crystal[[3]], newpos]}
 ];
 
@@ -2113,16 +2111,16 @@ ZRatFromQuiver[hMat_, Potential_, Ndim_] := With[
        n |-> Array[
          i |-> Array[
            j |-> If[i == j, 
-             1, (v[n, j] - v[n, i])/(y^d v[n, i] - y^(-d) v[n, j])], 
+             1, (u[n, j] - u[n, i])/(y^d u[n, i] - y^(-d) u[n, j])], 
            Ndim[[n]]], Ndim[[n]]], Length[Ndim]]] Times @@ 
      Flatten[Array[
        a |-> Array[
          b |-> Array[
            n |-> Array[
              t |-> Array[
-               h |-> (y^(d - 2 hMat[[a, b, n]]) v[a, t] - 
-                   v[b, h] y^(-d))/(v[b, h] - 
-                   v[a, t] y^(-2 hMat[[a, b, n]])), Ndim[[b]]], 
+               h |-> (y^(d - 2 hMat[[a, b, n]]) u[a, t] - 
+                   u[b, h] y^(-d))/(u[b, h] - 
+                   u[a, t] y^(-2 hMat[[a, b, n]])), Ndim[[b]]], 
              Ndim[[a]]], Length[hMat[[a, b]]]], Length[hMat]], 
        Length[hMat]]]
 ];
@@ -2542,97 +2540,61 @@ JKChiGenus
 ];
 
 JKResidueAtSingularity[crystal_, hMat_, potential_, etas_, 
-   mode_ : "Euler"] := 
-  With[{atomTypeList = First /@ crystal[[1]], 
-    positions = Last /@ crystal[[1]]}, {correspondence = 
-     u @@ # & /@ 
-      Module[{count = <||>}, ({#, 
-           count[#] = Lookup[count, #, 0] + 1} &) /@ atomTypeList], 
-    nvec = Lookup[Counts[atomTypeList], Range[Length[hMat]], 
-      0]}, {ratCorrespondence = v @@ # & /@ correspondence, 
-      ratPositions=y^(2 positions),
-    eta = EtaVectorFromEtas[atomTypeList, etas, nvec], 
-    eulerIntegrand = ZEulerFromQuiver[hMat, potential, nvec], 
-    chiYIntegrand = If[mode =!= "Euler", ZRatFromQuiver[hMat, potential, nvec], 0]},
-   Total[(chargeSet |->
-        With[{cutcharge = 
-           Drop[Transpose[
-             chargeSet], {crystal[[3, 
-               1]]}]}, {compactcharges = {FirstPosition[#, 1][[1]], 
-              FirstPosition[#, -1][[1]]} & /@ chargeSet, 
-          stab = LinearSolve[cutcharge, 
-            Drop[eta, {crystal[[3, 1]]}]]}, {minstab = Min[stab]},
-         If[minstab < 0, 0, 
-          If[minstab == 0, Message["Eta is not sum-regular"], 
-           If[Or @@ Equal @@@ Partition[Sort[stab], 2, 1], 
-            Message["Eta is not sum-regular"],
-            Module[
-             {residued = Array[False &, Length[correspondence]], 
-              result = 
-               eulerIntegrand /. {correspondence[[crystal[[3, 1]]]] ->
-                   positions[[crystal[[3, 1]]]]}},
-             residued[[crystal[[3, 1]]]] = True;
-             For[step = 2, step <= Length[crystal[[3]]], step++,
-              For[c = 1, c <= Length[compactcharges], c++,
-               If[compactcharges[[c, 1]] == crystal[[3, step]], 
-                If[residued[[compactcharges[[c, 2]]]], 
-                 result = 
-                  ResidueFast[
-                   result, {correspondence[[crystal[[3, step]]]], 
-                    positions[[crystal[[3, step]]]]}]; 
-                 residued[[crystal[[3, step]]]] = True; 
-                 Drop[compactcharges, {c}]; Break[]],
-                If[compactcharges[[c, 2]] == crystal[[3, step]], 
-                 If[residued[[compactcharges[[c, 1]]]], 
-                  result = -ResidueFast[
-                    result, {correspondence[[crystal[[3, step]]]], 
-                    positions[[crystal[[3, step]]]]}]; 
-                  residued[[crystal[[3, step]]]] = True; 
-                  Drop[compactcharges, {c}]; Break[]]
-                 ]]
-               ]];
-             If[mode === "Euler", 
-              Sign[Det[cutcharge]] result/Det[cutcharge], 
-              If[result === 0, 0,
-              Module[
-                {chiYresidued = 
-                  Array[False &, Length[ratCorrespondence]], 
-                 chiYresult = 
-                  chiYIntegrand /. {ratCorrespondence[[crystal[[3, 
-                    1]]]] -> ratPositions[[crystal[[3, 1]]]]}},
-                chiYresidued[[crystal[[3, 1]]]] = True;
-                For[step = 2, step <= Length[crystal[[3]]], step++,
-                 For[c = 1, c <= Length[compactcharges], c++,
-                  If[compactcharges[[c, 1]] == crystal[[3, step]], 
-                   If[chiYresidued[[compactcharges[[c, 2]]]], 
-                    chiYresult = 
-                    ResidueFast[
-                    chiYresult, {ratCorrespondence[[crystal[[3, step]]]],
-                     ratPositions[[crystal[[3, step]]]]}]; 
-                    chiYresidued[[crystal[[3, step]]]] = True; 
-                    Drop[compactcharges, {c}]; Break[]],
-                   If[compactcharges[[c, 2]] == crystal[[3, step]], 
-                    If[chiYresidued[[compactcharges[[c, 1]]]], 
-                    chiYresult = -ResidueFast[
-                    chiYresult, {ratCorrespondence[[crystal[[3, step]]]],
-                     ratPositions[[crystal[[3, step]]]]}]; 
-                    chiYresidued[[crystal[[3, step]]]] = True; 
-                    Drop[compactcharges, {c}]; Break[]]
-                    ]]
-                  ]]; Sign[Det[cutcharge]] chiYresult/Det[cutcharge]
-                ]]]]]]]]) /@ crystal[[2]]] Times @@ 
-     Array[Subscript[x, #]^nvec[[#]] &, Length[nvec]]
+   mode_ : "Euler"] :=
+  (* crystal of the form {atoms, charges, order} *)
+  With[{atomTypeList = First /@ crystal[[1]]},
+   {nvec = Lookup[Counts[atomTypeList], Range[Length[hMat]], 0],
+    compactcharges = {FirstPosition[#, 1][[1]], 
+        FirstPosition[#, -1][[1]]} & /@ crystal[[2]],
+    emptycutcharge = Array[0 &, Length[crystal[[2, 1]]] - 1],
+    dim = Length[atomTypeList]},
+   {eta = EtaVectorFromEtas[atomTypeList, etas, nvec]},
+   Module[{numberFlags = 0},
+    (flag |->
+       With[{kappas = 
+          Total[Array[
+            If[SubsetQ[flag[[1 ;; #2 + 1]], compactcharges[[#1]]], 
+              crystal[[2, #1]][[2 ;; -1]], emptycutcharge] &, {Length[
+              crystal[[2]]], dim - 1}]]},
+        If[
+         Not[MemberQ[kappas - Join[{emptycutcharge}, kappas][[1 ;; -2]],
+            emptycutcharge]],
+         With[{det = Det[kappas]},
+          If[Not[det == 0],
+           With[{min = 
+              Min[LinearSolve[Transpose[kappas], eta[[2 ;; -1]]]]},
+            If[min == 0, Message[JKResidue::SumRegular],
+             If[min > 0,
+              numberFlags += 1
+              ]]]]]]]) /@ 
+     Select[Permutations[Range[dim]], #[[1]] < #[[2]] &];
+    If[numberFlags == 0, 0,
+     With[{correspondence = 
+        u @@ # & /@ 
+         Module[{count = <||>}, ({#, 
+              count[#] = Lookup[count, #, 0] + 1} &) /@ atomTypeList],
+        eulerIntegrand = ZEulerFromQuiver[hMat, potential, nvec],
+       positions = Last /@ crystal[[1]]},
+      {eulerResult = 
+        FlagResidue[eulerIntegrand, positions, crystal[[3]], 
+         correspondence]}, 
+      If[Not[mode === "Euler" || eulerResult === 0], With[
+         {rationalPositions = y^(2 positions),
+          chiYIntegrand = ZRatFromQuiver[hMat, potential, nvec]},
+         FlagResidue[chiYIntegrand, rationalPositions, crystal[[3]], 
+          correspondence]
+         ], eulerResult] Times @@ 
+        Array[Subscript[x, #]^nvec[[#]] &, Length[nvec]] numberFlags
+      ]]]
 ];
 
-JKResidueFromNode[degenerateHMat_, potential_, eta_, order_, node_, 
-   mode_ : "Euler", prohibitedNodes_ : {}, 
-   preventSameHeightSameNode_ : True] := 
+JKResidueFromNode[degenerateHMat_, potential_, eta_, order_, node_, mode_ : "Euler", prohibitedNodes_ : {}, preventSameHeightSameNode_ : True] := 
   With[{hMat = Map[DeleteDuplicates, degenerateHMat, {2}], 
     etas = (val |-> Table[val, order]) /@ eta + 
       Array[Random[Integer, {1, 100}]/10000 &, {Length[eta], order}]},
     Module[{crystals = {}, queue = CreateDataStructure["Queue"]},
-    (* a crystal is {atoms,charges, order} where atoms is the atoms of the crystal of the form {node, height}, charges is a list of list of charges making it possible to obtain this set of atoms, and order is an arbitrary order in which one can take the residues *)
-    queue["Push", {{{node, 0}}, {{}}, {1}}];
+    (* a crystal is {atoms,charges, order} where atoms is the atoms of the crystal of the form {node, height}, charges is a list of charges with pole for this atom, and order is an arbitrary order in which one can take the residues *)
+    queue["Push", {{{node, 0}}, {}, {1}}];
     PrintTemporary["Starting to investigate all crystals starting by type ", node];
     While[! queue["EmptyQ"], With[{crys = queue["Pop"]},
       For[atom = 1, atom <= Length[crys[[1]]], atom++,
@@ -2654,12 +2616,7 @@ JKResidueFromNode[degenerateHMat_, potential_, eta_, order_, node_,
             If[crystalPos[[0]] === Missing,
              crystals = Append[crystals, newCrys]; 
              If[Length[newCrys[[1]]] < order, queue["Push", newCrys]],
-             With[{chargePos = 
-                FirstPosition[crystals[[crystalPos[[1]], 2]], 
-                 newCrys[[2]]]}, 
-              If[chargePos[[0]] === Missing, 
-               crystals[[crystalPos[[1]], 2]] = 
-                Union[crystals[[crystalPos[[1]], 2]], newCrys[[2]]]]]
+             crystals[[crystalPos[[1]], 2]] = Union[crystals[[crystalPos[[1]], 2]], newCrys[[2]]]
              ]]]];
          For[ind = 1, ind <= Length[hMat[[target, crys[[1, atom, 1]]]]],
            ind++, If[
@@ -2677,12 +2634,7 @@ JKResidueFromNode[degenerateHMat_, potential_, eta_, order_, node_,
             If[crystalPos[[0]] === Missing,
              crystals = Append[crystals, newCrys]; 
              If[Length[newCrys[[1]]] < order, queue["Push", newCrys]],
-             With[{chargePos = 
-                FirstPosition[crystals[[crystalPos[[1]], 2]], 
-                 newCrys[[2]]]}, 
-              If[chargePos[[0]] === Missing, 
-               crystals[[crystalPos[[1]], 2]] = 
-                Union[crystals[[crystalPos[[1]], 2]], newCrys[[2]]]]]
+             crystals[[crystalPos[[1]], 2]] = Union[crystals[[crystalPos[[1]], 2]], newCrys[[2]]]
              ]]]]
          ]]]]];
     PrintTemporary["Now computing the JK contribution of the ", Length[crystals], " possible crystals"];
