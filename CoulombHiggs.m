@@ -864,7 +864,9 @@ ShortestCycleWeight::noCycle="There is no cycle in the possibly cut quiver and s
 ToricFan::CornerIndexLimit="The toric fan doesn't have enough sides/corners. The index given is too high.";
 ToricFan::MissingArrow="This arrow does not come from two connected sides of the toric fan, and is not associated to a corner of the toric fan.";
 
-Weight::NotGeneral="The chosen weight is not general enough. There exists some weight orthogonal to it."
+Weight::NotGeneral="The chosen weight is not general enough. There exists some weight orthogonal to it.";
+
+JKResidue::SumRegular="Eta is not sum-regular";
 
 Begin["`Private`"]
 
