@@ -2098,13 +2098,15 @@ ZEulerFromQuiver[hMat_, Potential_, Ndim_] := With[
 ];
 
 ZRatFromQuiver[hMat_, Potential_, Ndim_] := With[
+  {hrule = Array[(Symbol["h" <> ToString[#]] -> Log[y, Symbol["y" <> ToString[#]]]) &, 3]},
    {d = If[Or[Potential[[0]] === Integer, Potential[[0]] === Symbol], 
       Potential, 
       If[Or[Potential[[0]] === Times, 
         Potential[[0]] === NonCommutativeMultiply], 
        Total[Part @@ (Join[{hMat}, List @@ #]) & /@ List @@ Potential],
         Total[Part @@ (Join[{hMat}, List @@ #]) & /@ 
-         List @@ Potential[[1]]]]]},
+         List @@ Potential[[1]]]]]/.hrule,
+    heights = hMat/.hrule },
    (1/(y^d - y^(-d)))^(Total[Ndim] - 1) 
     Times @@ 
      Flatten[Array[
@@ -2118,9 +2120,9 @@ ZRatFromQuiver[hMat_, Potential_, Ndim_] := With[
          b |-> Array[
            n |-> Array[
              t |-> Array[
-               h |-> (y^(d - 2 hMat[[a, b, n]]) u[a, t] - 
+               h |-> (y^(d - 2 heights[[a, b, n]]) u[a, t] - 
                    u[b, h] y^(-d))/(u[b, h] - 
-                   u[a, t] y^(-2 hMat[[a, b, n]])), Ndim[[b]]], 
+                   u[a, t] y^(-2 heights[[a, b, n]])), Ndim[[b]]], 
              Ndim[[a]]], Length[hMat[[a, b]]]], Length[hMat]], 
        Length[hMat]]]
 ];
@@ -2579,7 +2581,7 @@ JKResidueAtSingularity[crystal_, hMat_, potential_, etas_,
         FlagResidue[eulerIntegrand, positions, crystal[[3]], 
          correspondence]}, 
       If[Not[mode === "Euler" || eulerResult === 0], With[
-         {rationalPositions = y^(2 positions),
+         {rationalPositions = y^(2 positions /. Array[(Symbol["h" <> ToString[#]] -> Log[y, Symbol["y" <> ToString[#]]]) &, 3]),
           chiYIntegrand = ZRatFromQuiver[hMat, potential, nvec]},
          FlagResidue[chiYIntegrand, rationalPositions, crystal[[3]], 
           correspondence]
@@ -3520,7 +3522,7 @@ Table[Sum[Plus@@ResList[[ResReg[[i,j,2]],ResReg[[i,j,3]]]],{j,Length[ResReg[[i]]
 
 CanonicalPartitionForm[expr_, variables_, simplify_: True] := 
   FromCoefficientRules[
-   MapAt[If[simplify,FullSimplify,Identity], 
+   MapAt[If[simplify,Simplify,Identity], 
     CoefficientRules[expr, 
      Subscript[x, #] & /@ Range[variables]], {All, 2}], 
    Subscript[x, #] & /@ Range[variables]];
